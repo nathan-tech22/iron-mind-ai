@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
 import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { calculateWorkout } from '@/lib/workout-logic';
