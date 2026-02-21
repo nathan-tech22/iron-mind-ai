@@ -13,7 +13,7 @@ const initialLifts = [
   { id: '4', name: 'PRESS', tm: 135 },
 ];
 
-const TrainingDashboard = () => {
+const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
   const [selectedLift, setSelectedLift] = useState(initialLifts[0]);
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
@@ -128,13 +128,19 @@ const TrainingDashboard = () => {
 
 export const AppContent = () => {
   const [activeTab, setActiveTab] = useState('train');
+  const [lifts, setLifts] = useState([
+    { id: '1', name: 'SQUAT', tm: 315 },
+    { id: '2', name: 'BENCH', tm: 225 },
+    { id: '3', name: 'DEADLIFT', tm: 405 },
+    { id: '4', name: 'PRESS', tm: 135 },
+  ]);
 
   return (
     <div className="min-h-screen bg-black text-white pb-32">
-      {activeTab === 'train' && <TrainingDashboard />}
+      {activeTab === 'train' && <TrainingDashboard initialLifts={lifts} />}
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen />}
-      {activeTab === 'settings' && <SettingsScreen />}
+      {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={setLifts} />}
       
       {/* Navigation */}
       <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">

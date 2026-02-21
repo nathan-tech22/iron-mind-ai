@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X } from 'lucide-react';
 
-export const SettingsScreen = () => {
+export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdateLifts: (l: any[]) => void }) => {
   const [editingTM, setEditingTM] = useState(false);
+  const [tempLifts, setTempLifts] = useState(lifts);
   
   const sections = [
     { icon: User, label: 'Profile Settings', value: 'Nathan Kennedy' },
@@ -64,12 +65,17 @@ export const SettingsScreen = () => {
             </button>
           </div>
           <div className="space-y-6 flex-1 overflow-y-auto">
-            {['SQUAT', 'BENCH', 'DEADLIFT', 'PRESS'].map((lift) => (
-              <div key={lift} className="space-y-2 text-left">
-                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1">{lift}</label>
+            {tempLifts.map((lift, i) => (
+              <div key={lift.name} className="space-y-2 text-left">
+                <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest px-1">{lift.name}</label>
                 <input 
                   type="number" 
-                  placeholder="0"
+                  value={lift.tm}
+                  onChange={(e) => {
+                    const next = [...tempLifts];
+                    next[i].tm = parseInt(e.target.value) || 0;
+                    setTempLifts(next);
+                  }}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-2xl font-black italic outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
@@ -77,7 +83,7 @@ export const SettingsScreen = () => {
           </div>
           <button 
             onClick={() => {
-              alert('Training Maxes updated successfully (Local Demo)');
+              onUpdateLifts(tempLifts);
               setEditingTM(false);
             }}
             className="mt-6 w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-900/40"
