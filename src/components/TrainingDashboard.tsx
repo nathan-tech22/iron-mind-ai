@@ -13,8 +13,6 @@ const initialLiftsData = [
   { id: '4', name: 'PRESS', tm: 135 },
 ];
 
-import { PRAlert } from './PRAlert';
-
 const TrainingView = ({ 
   lifts, 
   week, 
@@ -141,16 +139,48 @@ export const AppContent = () => {
   const [selectedLift, setSelectedLift] = useState(initialLiftsData[0]);
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
-
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Persistent Storage Logic
+  useEffect(() => {
+    const savedLifts = localStorage.getItem('iron-mind-lifts');
+    if (savedLifts) {
+      const parsedLifts = JSON.parse(savedLifts);
+      setLifts(parsedLifts);
+      setSelectedLift(parsedLifts[0]);
+    }
+    
+    const savedHistory = localStorage.getItem('iron-mind-history');
+    if (savedHistory) setHistory(JSON.parse(savedHistory));
+  }, []);
+
   useEffect(() => {
     if (showSuccess) {
       const timer = setTimeout(() => setShowSuccess(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
+
+  const updateLifts = (newLifts: any[]) => {
+    setLifts(newLifts);
+    localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
+  };
+
+  const cycleWeek = (dir: number) => {
+    setWeek(prev => {
+      const next = prev + dir;
+      if (next > 4) return 1;
+      if (next < 1) return 4;
+      return next;
+    });
+    setCompletedSets([]);
+  };
+
+  const toggleSet = (index: number) => {
+    setCompletedSets(prev => 
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
+  };
 
   const logWorkout = () => {
     if (completedSets.length === 0) return;
