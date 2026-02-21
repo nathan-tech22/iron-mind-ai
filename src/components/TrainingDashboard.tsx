@@ -13,6 +13,8 @@ const initialLiftsData = [
   { id: '4', name: 'PRESS', tm: 135 },
 ];
 
+import { PRAlert } from './PRAlert';
+
 const TrainingView = ({ 
   lifts, 
   week, 
@@ -21,7 +23,8 @@ const TrainingView = ({
   setSelectedLift, 
   completedSets, 
   toggleSet,
-  logWorkout 
+  logWorkout,
+  showSuccess 
 }: any) => {
   const workoutSets = calculateWorkout(selectedLift.tm, week);
   const activeWeight = completedSets.length > 0 
@@ -29,7 +32,15 @@ const TrainingView = ({
     : workoutSets[0].weight;
 
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left">
+    <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left relative overflow-hidden">
+      {showSuccess && (
+        <div className="fixed inset-0 z-[300] bg-blue-600 flex items-center justify-center animate-in fade-in zoom-in duration-300">
+           <div className="text-center">
+              <CheckCircle2 size={120} className="text-white mx-auto mb-4" strokeWidth={3} />
+              <h2 className="text-4xl font-black italic text-white tracking-tighter">IRON SAVED</h2>
+           </div>
+        </div>
+      )}
       <header className="p-6 pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
         <h1 className="text-2xl font-black tracking-tighter italic text-blue-500">
           IRON-MIND <span className="text-white">AI</span>
@@ -131,39 +142,15 @@ export const AppContent = () => {
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
 
+  const [showSuccess, setShowSuccess] = useState(false);
+
   // Persistent Storage Logic
   useEffect(() => {
-    const savedLifts = localStorage.getItem('iron-mind-lifts');
-    if (savedLifts) {
-      const parsedLifts = JSON.parse(savedLifts);
-      setLifts(parsedLifts);
-      setSelectedLift(parsedLifts[0]);
+    if (showSuccess) {
+      const timer = setTimeout(() => setShowSuccess(false), 1500);
+      return () => clearTimeout(timer);
     }
-    
-    const savedHistory = localStorage.getItem('iron-mind-history');
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
-  }, []);
-
-  const updateLifts = (newLifts: any[]) => {
-    setLifts(newLifts);
-    localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
-  };
-
-  const cycleWeek = (dir: number) => {
-    setWeek(prev => {
-      const next = prev + dir;
-      if (next > 4) return 1;
-      if (next < 1) return 4;
-      return next;
-    });
-    setCompletedSets([]);
-  };
-
-  const toggleSet = (index: number) => {
-    setCompletedSets(prev => 
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
+  }, [showSuccess]);
 
   const logWorkout = () => {
     if (completedSets.length === 0) return;
@@ -181,7 +168,7 @@ export const AppContent = () => {
     setHistory(updatedHistory);
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
     setCompletedSets([]);
-    alert('Workout Logged Successfully!');
+    setShowSuccess(true);
   };
 
   return (
@@ -196,6 +183,7 @@ export const AppContent = () => {
           completedSets={completedSets}
           toggleSet={toggleSet}
           logWorkout={logWorkout}
+          showSuccess={showSuccess}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
