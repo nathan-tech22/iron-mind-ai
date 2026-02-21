@@ -135,12 +135,23 @@ export const AppContent = () => {
     { id: '4', name: 'PRESS', tm: 135 },
   ]);
 
+  // Persistent Storage Logic
+  useEffect(() => {
+    const saved = localStorage.getItem('iron-mind-lifts');
+    if (saved) setLifts(JSON.parse(saved));
+  }, []);
+
+  const updateLifts = (newLifts: any[]) => {
+    setLifts(newLifts);
+    localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-32">
       {activeTab === 'train' && <TrainingDashboard initialLifts={lifts} />}
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen />}
-      {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={setLifts} />}
+      {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} />}
       
       {/* Navigation */}
       <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
