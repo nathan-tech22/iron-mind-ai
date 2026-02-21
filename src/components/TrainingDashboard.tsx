@@ -6,56 +6,27 @@ import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
 
-const initialLifts = [
+const initialLiftsData = [
   { id: '1', name: 'SQUAT', tm: 315 },
   { id: '2', name: 'BENCH', tm: 225 },
   { id: '3', name: 'DEADLIFT', tm: 405 },
   { id: '4', name: 'PRESS', tm: 135 },
 ];
 
-const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
-  const [selectedLift, setSelectedLift] = useState(initialLifts[0]);
-  const [completedSets, setCompletedSets] = useState<number[]>([]);
-  const [week, setWeek] = useState(1);
-
+const TrainingView = ({ 
+  lifts, 
+  week, 
+  cycleWeek, 
+  selectedLift, 
+  setSelectedLift, 
+  completedSets, 
+  toggleSet,
+  logWorkout 
+}: any) => {
   const workoutSets = calculateWorkout(selectedLift.tm, week);
-
-  const toggleSet = (index: number) => {
-    setCompletedSets(prev => 
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
-    );
-  };
-
-  const cycleWeek = (dir: number) => {
-    setWeek(prev => {
-      const next = prev + dir;
-      if (next > 4) return 1;
-      if (next < 1) return 4;
-      return next;
-    });
-    setCompletedSets([]);
-  };
-
   const activeWeight = completedSets.length > 0 
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
-
-  const [showPRAlert, setShowPRAlert] = useState(false);
-  const [prDetails, setPrDetails] = useState({ lift: '', weight: 0, est1RM: 0 });
-
-  const handleSetToggle = (index: number, set: any) => {
-    const isNowComplete = !completedSets.includes(index);
-    toggleSet(index);
-
-    if (isNowComplete && (week === 3 || set.reps.includes('+'))) {
-      const currentEst = 367; // Placeholder for logic
-      const newEst = Math.round(set.weight * (1 + 5 / 30)); 
-      if (newEst > currentEst) {
-        setPrDetails({ lift: selectedLift.name, weight: set.weight, est1RM: newEst });
-        setShowPRAlert(true);
-      }
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left">
@@ -76,13 +47,10 @@ const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
         <VisualBarbell weight={activeWeight} />
 
         <div className="grid grid-cols-2 gap-3">
-          {initialLifts.map((lift) => (
+          {lifts.map((lift: any) => (
             <button
               key={lift.id}
-              onClick={() => {
-                setSelectedLift(lift);
-                setCompletedSets([]);
-              }}
+              onClick={() => setSelectedLift(lift)}
               className={`p-4 rounded-2xl border transition-all text-left relative overflow-hidden ${
                 selectedLift.id === lift.id 
                   ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]' 
@@ -102,7 +70,7 @@ const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">
             <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Main Sets</h2>
-            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">90% Training Max</span>
+            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">90% TM</span>
           </div>
           
           {workoutSets.map((set, i) => (
@@ -138,6 +106,18 @@ const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
             </div>
           ))}
         </div>
+
+        <button 
+          onClick={logWorkout}
+          disabled={completedSets.length === 0}
+          className={`w-full font-black py-5 rounded-2xl shadow-lg italic tracking-widest transition-all mt-6 ${
+            completedSets.length > 0 
+              ? 'bg-blue-600 text-white shadow-blue-900/20 hover:bg-blue-500' 
+              : 'bg-zinc-900 text-zinc-700 border border-zinc-800'
+          }`}
+        >
+          LOG SESSION
+        </button>
       </main>
     </div>
   );
@@ -145,19 +125,20 @@ const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
 
 export const AppContent = () => {
   const [activeTab, setActiveTab] = useState('train');
-  const [lifts, setLifts] = useState([
-    { id: '1', name: 'SQUAT', tm: 315 },
-    { id: '2', name: 'BENCH', tm: 225 },
-    { id: '3', name: 'DEADLIFT', tm: 405 },
-    { id: '4', name: 'PRESS', tm: 135 },
-  ]);
-
+  const [lifts, setLifts] = useState(initialLiftsData);
   const [history, setHistory] = useState<any[]>([]);
+  const [selectedLift, setSelectedLift] = useState(initialLiftsData[0]);
+  const [completedSets, setCompletedSets] = useState<number[]>([]);
+  const [week, setWeek] = useState(1);
 
   // Persistent Storage Logic
   useEffect(() => {
     const savedLifts = localStorage.getItem('iron-mind-lifts');
-    if (savedLifts) setLifts(JSON.parse(savedLifts));
+    if (savedLifts) {
+      const parsedLifts = JSON.parse(savedLifts);
+      setLifts(parsedLifts);
+      setSelectedLift(parsedLifts[0]);
+    }
     
     const savedHistory = localStorage.getItem('iron-mind-history');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
@@ -168,9 +149,26 @@ export const AppContent = () => {
     localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
   };
 
+  const cycleWeek = (dir: number) => {
+    setWeek(prev => {
+      const next = prev + dir;
+      if (next > 4) return 1;
+      if (next < 1) return 4;
+      return next;
+    });
+    setCompletedSets([]);
+  };
+
+  const toggleSet = (index: number) => {
+    setCompletedSets(prev => 
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
+  };
+
   const logWorkout = () => {
     if (completedSets.length === 0) return;
     
+    const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
     const newLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -189,49 +187,35 @@ export const AppContent = () => {
   return (
     <div className="min-h-screen bg-black text-white pb-32">
       {activeTab === 'train' && (
-        <div className="flex flex-col">
-          <TrainingDashboard initialLifts={lifts} />
-          <div className="px-4 mt-6">
-            <button 
-              onClick={logWorkout}
-              className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-900/20 italic tracking-widest hover:bg-blue-500 transition-all"
-            >
-              LOG SESSION
-            </button>
-          </div>
-        </div>
+        <TrainingView 
+          lifts={lifts}
+          week={week}
+          cycleWeek={cycleWeek}
+          selectedLift={selectedLift}
+          setSelectedLift={setSelectedLift}
+          completedSets={completedSets}
+          toggleSet={toggleSet}
+          logWorkout={logWorkout}
+        />
       )}
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} />}
       
-      {/* Navigation */}
       <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
-        <button 
-          onClick={() => setActiveTab('train')}
-          className={`flex flex-col items-center gap-1.5 transition-colors ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}
-        >
+        <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <Dumbbell size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest">Train</span>
         </button>
-        <button 
-          onClick={() => setActiveTab('history')}
-          className={`flex flex-col items-center gap-1.5 transition-colors ${activeTab === 'history' ? 'text-blue-500' : 'text-zinc-600'}`}
-        >
+        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'history' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <History size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest">History</span>
         </button>
-        <button 
-          onClick={() => setActiveTab('stats')}
-          className={`flex flex-col items-center gap-1.5 transition-colors ${activeTab === 'stats' ? 'text-blue-500' : 'text-zinc-600'}`}
-        >
+        <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'stats' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <TrendingUp size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest">Progress</span>
         </button>
-        <button 
-          onClick={() => setActiveTab('settings')}
-          className={`flex flex-col items-center gap-1.5 transition-colors ${activeTab === 'settings' ? 'text-blue-500' : 'text-zinc-600'}`}
-        >
+        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'settings' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <SettingsIcon size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest">Settings</span>
         </button>
