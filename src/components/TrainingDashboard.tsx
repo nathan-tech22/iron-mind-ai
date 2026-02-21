@@ -40,6 +40,23 @@ const TrainingDashboard = ({ initialLifts }: { initialLifts: any[] }) => {
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
 
+  const [showPRAlert, setShowPRAlert] = useState(false);
+  const [prDetails, setPrDetails] = useState({ lift: '', weight: 0, est1RM: 0 });
+
+  const handleSetToggle = (index: number, set: any) => {
+    const isNowComplete = !completedSets.includes(index);
+    toggleSet(index);
+
+    if (isNowComplete && (week === 3 || set.reps.includes('+'))) {
+      const currentEst = 367; // Placeholder for logic
+      const newEst = Math.round(set.weight * (1 + 5 / 30)); 
+      if (newEst > currentEst) {
+        setPrDetails({ lift: selectedLift.name, weight: set.weight, est1RM: newEst });
+        setShowPRAlert(true);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left">
       <header className="p-6 pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
