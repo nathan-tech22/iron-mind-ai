@@ -152,10 +152,15 @@ export const AppContent = () => {
     { id: '4', name: 'PRESS', tm: 135 },
   ]);
 
+  const [history, setHistory] = useState<any[]>([]);
+
   // Persistent Storage Logic
   useEffect(() => {
-    const saved = localStorage.getItem('iron-mind-lifts');
-    if (saved) setLifts(JSON.parse(saved));
+    const savedLifts = localStorage.getItem('iron-mind-lifts');
+    if (savedLifts) setLifts(JSON.parse(savedLifts));
+    
+    const savedHistory = localStorage.getItem('iron-mind-history');
+    if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, []);
 
   const updateLifts = (newLifts: any[]) => {
@@ -163,11 +168,41 @@ export const AppContent = () => {
     localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
   };
 
+  const logWorkout = () => {
+    if (completedSets.length === 0) return;
+    
+    const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
+    const newLog = {
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      lift: selectedLift.name,
+      sets: completedSets.length,
+      volume: totalVolume.toLocaleString()
+    };
+    
+    const updatedHistory = [newLog, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
+    setCompletedSets([]);
+    alert('Workout Logged Successfully!');
+  };
+
   return (
     <div className="min-h-screen bg-black text-white pb-32">
-      {activeTab === 'train' && <TrainingDashboard initialLifts={lifts} />}
+      {activeTab === 'train' && (
+        <div className="flex flex-col">
+          <TrainingDashboard initialLifts={lifts} />
+          <div className="px-4 mt-6">
+            <button 
+              onClick={logWorkout}
+              className="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-900/20 italic tracking-widest hover:bg-blue-500 transition-all"
+            >
+              LOG SESSION
+            </button>
+          </div>
+        </div>
+      )}
       {activeTab === 'stats' && <PRTracker />}
-      {activeTab === 'history' && <HistoryScreen />}
+      {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} />}
       
       {/* Navigation */}
