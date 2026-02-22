@@ -28,9 +28,15 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) alert(error.message);
-      else alert('Check your email to confirm your account!');
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        alert(error.message);
+      } else {
+        if (!data.session) {
+          alert('Account created! Note: If you do not get an email, turn off "Confirm Email" in your Supabase Auth settings, then try signing in.');
+          setIsSignUp(false);
+        }
+      }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) alert(error.message);
