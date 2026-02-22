@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { History, Calendar, Dumbbell, ChevronRight, X, Activity } from 'lucide-react';
+import { History, Calendar, Dumbbell, ChevronRight, X, Activity, TrendingUp, Zap } from 'lucide-react';
+import { estimate1RM } from '@/lib/iron-logic';
 
 export const HistoryScreen = ({ logs }: { logs: any[] }) => {
   const [selectedLog, setSelectedLog] = useState<any>(null);
+
+  // Helper to calculate intensity (relative to some baseline or just raw est1RM)
+  const calculateIntensity = (log: any) => {
+    const vol = parseFloat(log.volume?.replace(/,/g, '') || '0');
+    const sets = parseInt(log.sets) || 1;
+    const avgWeight = vol / sets;
+    return estimate1RM.epley(avgWeight, 5); // Estimate 1RM for this specific session
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white p-6 pb-32">
@@ -20,25 +29,34 @@ export const HistoryScreen = ({ logs }: { logs: any[] }) => {
              <p className="text-zinc-600 font-bold uppercase tracking-widest text-xs">No sessions logged yet</p>
           </div>
         ) : (
-          logs.map((log, i) => (
-            <div 
-              key={i} 
-              onClick={() => setSelectedLog(log)}
-              className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 flex items-center justify-between hover:border-zinc-700 transition-colors cursor-pointer group active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-5">
-                <div className="bg-zinc-800 p-3 rounded-2xl group-hover:bg-blue-600 transition-colors">
-                  <Dumbbell size={22} className="text-zinc-400 group-hover:text-white" />
+          logs.map((log, i) => {
+            const intensity = calculateIntensity(log);
+            return (
+              <div 
+                key={i} 
+                onClick={() => setSelectedLog({ ...log, intensity })}
+                className="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 flex items-center justify-between hover:border-zinc-700 transition-colors cursor-pointer group active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-5">
+                  <div className="bg-zinc-800 p-3 rounded-2xl group-hover:bg-blue-600 transition-colors">
+                    <Dumbbell size={22} className="text-zinc-400 group-hover:text-white" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{log.date}</div>
+                    <div className="text-xl font-black italic mt-0.5">{log.lift}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <div className="text-xs font-bold text-zinc-600">{log.sets} sets • {log.volume} lbs</div>
+                      <div className="flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase">
+                        <Zap size={10} strokeWidth={3} />
+                        {intensity}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{log.date}</div>
-                  <div className="text-xl font-black italic mt-0.5">{log.lift}</div>
-                  <div className="text-xs font-bold text-zinc-600 mt-1">{log.sets} sets • {log.volume} lbs</div>
-                </div>
+                <ChevronRight size={20} className="text-zinc-800 group-hover:text-blue-500" />
               </div>
-              <ChevronRight size={20} className="text-zinc-800 group-hover:text-blue-500" />
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -51,35 +69,60 @@ export const HistoryScreen = ({ logs }: { logs: any[] }) => {
             </button>
           </div>
           
-          <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 mb-6">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 mb-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+              <Activity size={120} className="text-blue-500" />
+            </div>
             <div className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] mb-2">{selectedLog.date}</div>
             <h3 className="text-5xl font-black italic mb-6">{selectedLog.lift}</h3>
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-black/40 p-4 rounded-2xl border border-zinc-800">
-                <div className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Volume</div>
-                <div className="text-xl font-black italic">{selectedLog.volume} <span className="text-[10px] not-italic text-zinc-600">LBS</span></div>
+              <div className="bg-black/40 p-5 rounded-2xl border border-zinc-800">
+                <div className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Total Volume</div>
+                <div className="text-2xl font-black italic tabular-nums">{selectedLog.volume}</div>
+                <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">Pounds moved</div>
               </div>
-              <div className="bg-black/40 p-4 rounded-2xl border border-zinc-800">
-                <div className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Effort</div>
-                <div className="text-xl font-black italic">{selectedLog.sets} <span className="text-[10px] not-italic text-zinc-600">SETS</span></div>
+              <div className="bg-black/40 p-5 rounded-2xl border border-zinc-800">
+                <div className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Peak Intensity</div>
+                <div className="text-2xl font-black italic tabular-nums text-emerald-500">{selectedLog.intensity}</div>
+                <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mt-1">Est. 1RM Output</div>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 space-y-4">
-             <div className="flex items-center gap-3 text-zinc-500 px-2">
-                <Activity size={16} />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em]">Detailed Analytics coming in Phase 2</span>
+          <div className="flex-1 space-y-6 overflow-y-auto">
+             <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <TrendingUp size={18} className="text-blue-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Advanced Analytics</span>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-zinc-500 uppercase">Avg. Weight per Set</span>
+                    <span className="text-sm font-black italic">{Math.round(parseFloat(selectedLog.volume.replace(/,/g, '')) / selectedLog.sets)} lbs</span>
+                  </div>
+                  <div className="w-full bg-zinc-800 h-1 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full w-[65%]" />
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2">
+                    <span className="text-xs font-bold text-zinc-500 uppercase">Recovery Demand</span>
+                    <span className="text-xs font-black text-amber-500 uppercase italic">High</span>
+                  </div>
+                </div>
              </div>
-             <div className="h-32 bg-zinc-900/30 border border-zinc-800/50 border-dashed rounded-3xl flex items-center justify-center">
-                <span className="text-zinc-700 text-[10px] font-bold uppercase tracking-widest text-center px-8 leading-relaxed">Advanced breakdown including velocity and heart rate sync will appear here.</span>
+
+             <div className="px-2">
+                <p className="text-zinc-500 text-[10px] font-bold uppercase leading-relaxed tracking-widest">
+                  This session represents a {selectedLog.intensity > 300 ? 'heavy' : 'moderate'} load for your central nervous system. Prioritize protein and sleep for the next 24 hours to maximize adaptation.
+                </p>
              </div>
           </div>
 
           <button 
             onClick={() => setSelectedLog(null)}
-            className="mt-6 w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-900/40 tracking-widest"
+            className="mt-6 w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-lg shadow-blue-900/40 tracking-widest italic"
           >
             CLOSE INTEL
           </button>
