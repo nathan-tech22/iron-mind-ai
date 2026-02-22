@@ -296,6 +296,8 @@ export const AppContent = () => {
       return next;
     });
     setCompletedSets([]);
+    // Scroll to top on week change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const toggleSet = (index: number) => {
@@ -310,10 +312,19 @@ export const AppContent = () => {
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
     
-    // We'll use the last completed set as the primary record for weight/reps
+    // Check for AMRAP rep entry
+    let actualReps = 0;
     const lastSetIdx = completedSets[completedSets.length - 1];
+    const targetRepsStr = workoutSets[lastSetIdx].reps;
+    
+    if (targetRepsStr.includes('+')) {
+      const input = window.prompt(`AMRAP SET: How many reps did you get? (Target: ${targetRepsStr})`, targetRepsStr.replace('+', ''));
+      actualReps = parseInt(input || '0');
+    } else {
+      actualReps = parseInt(targetRepsStr);
+    }
+
     const weightUsed = workoutSets[lastSetIdx].weight;
-    const repsPlanned = workoutSets[lastSetIdx].reps;
     
     const newLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
@@ -330,7 +341,7 @@ export const AppContent = () => {
           user_id: user.id,
           lift_id: selectedLift.id,
           weight_used: weightUsed,
-          reps_completed: parseInt(repsPlanned.replace('+', '')),
+          reps_completed: actualReps,
           workout_date: new Date().toISOString()
         });
         
@@ -338,7 +349,6 @@ export const AppContent = () => {
       }
     } catch (e) {
       console.error('Supabase Sync Failed:', e);
-      // Fallback: Store locally with a "pending-sync" flag if we wanted to be fancy
     }
 
     const updatedHistory = [newLog, ...history];
