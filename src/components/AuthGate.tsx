@@ -33,8 +33,10 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // Create a specific redirect URL that includes a timestamp or UUID to bypass potential Vercel/Edge caching
-      const redirectTo = `${window.location.origin}/?auth_callback=${crypto.randomUUID()}`;
+      // Use process.env.NEXT_PUBLIC_SITE_URL if available, otherwise fallback to window.location.origin
+      // This ensures that in production (Vercel), it redirects to the correct domain, not localhost.
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const redirectTo = `${siteUrl}/?auth_callback=${crypto.randomUUID()}`;
       
       const { error } = await supabase.auth.signInWithOtp({
         email,
