@@ -58,7 +58,6 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="space-y-4 w-full max-w-xs">
-        {/* Magic Link Login */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 mb-2">
           <input 
             type="email" 
@@ -76,20 +75,6 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
             GET MAGIC LINK
           </button>
         </div>
-
-        <div className="flex items-center gap-4 py-2">
-          <div className="h-px bg-zinc-800 flex-1" />
-          <span className="text-[10px] font-black text-zinc-600 uppercase">OR</span>
-          <div className="h-px bg-zinc-800 flex-1" />
-        </div>
-
-        <button 
-          onClick={signInWithGoogle}
-          className="w-full flex items-center justify-center gap-3 bg-white text-black py-4 rounded-2xl font-black italic hover:bg-zinc-200 transition-all shadow-xl shadow-blue-500/10"
-        >
-          <LogIn size={20} />
-          SIGN IN WITH GOOGLE
-        </button>
 
         <button 
           onClick={() => setSession({ user: { id: 'demo-user', email: 'guest@iron-mind.ai' } })}
