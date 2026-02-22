@@ -170,24 +170,24 @@ export const AppContent = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load Lifts from Supabase
+  // Load History and Lifts
   useEffect(() => {
-    const fetchLifts = async () => {
+    const initializeData = async () => {
       try {
         setLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user && user.id !== 'demo-user') {
-          const { data, error } = await supabase
+          // 1. Fetch Lifts
+          const { data: liftData, error: liftError } = await supabase
             .from('lifts')
             .select('*')
             .eq('user_id', user.id);
 
-          if (error) throw error;
+          if (liftError) throw liftError;
 
-          if (data && data.length > 0) {
-            // Map DB schema to UI state
-            const mappedLifts = data.map(l => ({
+          if (liftData && liftData.length > 0) {
+            const mappedLifts = liftData.map(l => ({
               id: l.id,
               name: l.name.toUpperCase(),
               tm: Math.round(l.true_1rm * (l.training_max_pct || 0.9))
@@ -195,26 +195,44 @@ export const AppContent = () => {
             setLifts(mappedLifts);
             setSelectedLift(mappedLifts[0]);
           }
+
+          // 2. Fetch History
+          const { data: historyData, error: historyError } = await supabase
+            .from('workouts')
+            .select('*, lifts(name)')
+            .eq('user_id', user.id)
+            .order('workout_date', { ascending: false });
+
+          if (historyError) throw historyError;
+
+          if (historyData && historyData.length > 0) {
+            const mappedHistory = historyData.map(w => ({
+              date: new Date(w.workout_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              lift: w.lifts.name.toUpperCase(),
+              sets: 1, // Database stores individual sets usually, UI currently groups
+              volume: (w.weight_used * w.reps_completed).toLocaleString()
+            }));
+            setHistory(mappedHistory);
+          }
         } else {
-          // Fallback to LocalStorage for Guest/Demo
+          // Local Fallback
           const savedLifts = localStorage.getItem('iron-mind-lifts');
           if (savedLifts) {
             const parsedLifts = JSON.parse(savedLifts);
             setLifts(parsedLifts);
             setSelectedLift(parsedLifts[0]);
           }
+          const savedHistory = localStorage.getItem('iron-mind-history');
+          if (savedHistory) setHistory(JSON.parse(savedHistory));
         }
       } catch (err) {
-        console.error('Error fetching lifts:', err);
+        console.error('Data initialization failed:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLifts();
-    
-    const savedHistory = localStorage.getItem('iron-mind-history');
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    initializeData();
   }, []);
 
   // Auto-advance logic
@@ -252,6 +270,12 @@ export const AppContent = () => {
     
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
+    
+    // We'll use the last completed set as the primary record for weight/reps
+    const lastSetIdx = completedSets[completedSets.length - 1];
+    const weightUsed = workoutSets[lastSetIdx].weight;
+    const repsPlanned = workoutSets[lastSetIdx].reps;
+    
     const newLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lift: selectedLift.name,
@@ -259,20 +283,23 @@ export const AppContent = () => {
       volume: totalVolume.toLocaleString()
     };
     
-    // Auto-Cloud Sync (Background)
+    // Live Supabase Sync
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user && user.id !== 'demo-user') {
-        await supabase.from('workouts').insert({
+        const { error } = await supabase.from('workouts').insert({
           user_id: user.id,
           lift_id: selectedLift.id,
-          weight_lbs: totalVolume / completedSets.length,
-          reps_completed: 5,
+          weight_used: weightUsed,
+          reps_completed: parseInt(repsPlanned.replace('+', '')),
           workout_date: new Date().toISOString()
         });
+        
+        if (error) throw error;
       }
     } catch (e) {
-      console.log('Background sync standby');
+      console.error('Supabase Sync Failed:', e);
+      // Fallback: Store locally with a "pending-sync" flag if we wanted to be fancy
     }
 
     const updatedHistory = [newLog, ...history];
