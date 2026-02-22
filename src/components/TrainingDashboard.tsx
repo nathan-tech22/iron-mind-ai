@@ -163,6 +163,24 @@ export const AppContent = () => {
   const [week, setWeek] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Auto-advance logic
+  useEffect(() => {
+    if (showSuccess && week === 4) {
+      // If we just logged a deload week, prompt for cycle advance
+      const shouldAdvance = window.confirm("Cycle Complete! Advance Training Maxes?");
+      if (shouldAdvance) {
+        const nextLifts = lifts.map(l => ({
+          ...l,
+          tm: l.tm + (l.name === 'SQUAT' || l.name === 'DEADLIFT' ? 10 : 5)
+        }));
+        setLifts(nextLifts);
+        localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
+        setWeek(1);
+        alert("Training Maxes increased. Time to eat.");
+      }
+    }
+  }, [showSuccess, week]);
+
   useEffect(() => {
     const savedLifts = localStorage.getItem('iron-mind-lifts');
     if (savedLifts) {
