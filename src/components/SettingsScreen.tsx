@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X } from 'lucide-react';
 
 export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdateLifts: (l: any[]) => void }) => {
