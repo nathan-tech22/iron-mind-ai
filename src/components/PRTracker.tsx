@@ -1,25 +1,55 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, ArrowUpRight, Trophy, Calendar, Target, Activity } from 'lucide-react';
 import { estimate1RM } from '@/lib/iron-logic';
+import { supabase } from '@/lib/supabase';
 
 export const PRTracker = () => {
   const [prHistory, setPrHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('iron-mind-history');
-    if (saved) {
-      const history = JSON.parse(saved);
-      // Logic to find max PRs per lift
-      const bests: Record<string, any> = {};
-      history.forEach((log: any) => {
-        const weight = parseInt(log.volume.replace(/,/g, '')) / log.sets; // rough calc for now
-        const est = estimate1RM.epley(weight, 5); // assuming standard reps for now
-        if (!bests[log.lift] || est > bests[log.lift].est1RM) {
-          bests[log.lift] = { ...log, est1RM: est };
+    const fetchData = async () => {
+      // 1. Try Supabase first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== 'demo-user') {
+        const { data: workouts } = await supabase
+          .from('workouts')
+          .select('*, lifts(name)')
+          .order('workout_date', { ascending: false });
+        
+        if (workouts && workouts.length > 0) {
+          const bests: Record<string, any> = {};
+          workouts.forEach((w: any) => {
+            const est = estimate1RM.epley(w.weight_lbs, w.reps_completed);
+            const liftName = w.lifts?.name || 'UNKNOWN';
+            if (!bests[liftName] || est > bests[liftName].est1RM) {
+              bests[liftName] = { lift: liftName, est1RM: est, date: new Date(w.workout_date).toLocaleDateString() };
+            }
+          });
+          setPrHistory(Object.values(bests));
+          setLoading(false);
+          return;
         }
-      });
-      setPrHistory(Object.values(bests));
-    }
+      }
+
+      // 2. Fallback to LocalStorage
+      const saved = localStorage.getItem('iron-mind-history');
+      if (saved) {
+        const history = JSON.parse(saved);
+        const bests: Record<string, any> = {};
+        history.forEach((log: any) => {
+          const weight = parseInt(log.volume.replace(/,/g, '')) / log.sets;
+          const est = estimate1RM.epley(weight, 5);
+          if (!bests[log.lift] || est > bests[log.lift].est1RM) {
+            bests[log.lift] = { ...log, est1RM: est };
+          }
+        });
+        setPrHistory(Object.values(bests));
+      }
+      setLoading(false);
+    };
+
+    fetchData();
   }, []);
 
   const king = prHistory.length > 0 ? prHistory.reduce((prev, current) => (prev.est1RM > current.est1RM) ? prev : current) : null;
