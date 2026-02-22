@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
-import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
+import { analyzeProgress } from '@/lib/coach-logic';
 import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
@@ -16,6 +17,7 @@ const initialLiftsData = [
 
 const TrainingView = ({ 
   lifts, 
+  history,
   week, 
   cycleWeek, 
   selectedLift, 
@@ -29,6 +31,9 @@ const TrainingView = ({
   const activeWeight = completedSets.length > 0 
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
+
+  const insights = analyzeProgress(history, lifts);
+  const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left relative overflow-hidden">
@@ -56,6 +61,18 @@ const TrainingView = ({
       <main className="flex-1 px-4 space-y-6 max-w-2xl mx-auto w-full">
         <VisualBarbell weight={activeWeight} />
 
+        {activeInsight && (
+          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500">
+            <div className="bg-blue-600 p-2 rounded-xl mt-1">
+              <Sparkles size={18} className="text-white" />
+            </div>
+            <div>
+              <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">AI Coaching Intel</div>
+              <p className="text-sm font-bold text-zinc-200 leading-tight">{activeInsight.message}</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-3">
           {lifts.map((lift: any) => (
             <button
@@ -73,6 +90,11 @@ const TrainingView = ({
                 {lift.name}
               </div>
               <div className="text-xl font-black italic">{lift.tm}</div>
+              {insights.some((i: any) => i.lift === lift.name && i.type === 'LEAP') && (
+                <div className="absolute top-2 right-2">
+                  <AlertCircle size={12} className="text-blue-200 animate-pulse" />
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -99,19 +121,19 @@ const TrainingView = ({
                 </div>
                 <div className="text-left">
                   <div className="text-2xl font-black italic tabular-nums">
-                    {set.weight} <span className="text-sm not-italic text-zinc-500 font-bold ml-1">LBS</span>
+                    {set.weight} <span className="text-sm not-italic text-zinc-600 font-bold ml-1">LBS</span>
                   </div>
-                  <div className={`text-xs font-bold uppercase tracking-widest ${completedSets.includes(i) ? 'text-emerald-500/70' : 'text-zinc-500'}`}>
+                  <div className={`text-[10px] font-bold uppercase tracking-widest ${completedSets.includes(i) ? 'text-emerald-500/70' : 'text-zinc-600'}`}>
                     Target: {set.reps} Reps
                   </div>
                 </div>
               </div>
               {completedSets.includes(i) ? (
-                <div className="bg-emerald-500 rounded-full p-1">
+                <div className="bg-emerald-500 rounded-full p-1 shadow-lg shadow-emerald-900/20">
                   <CheckCircle2 className="text-black" size={24} />
                 </div>
               ) : (
-                <Circle className="text-zinc-700" size={28} />
+                <Circle className="text-zinc-800" size={28} />
               )}
             </div>
           ))}
@@ -122,8 +144,8 @@ const TrainingView = ({
           disabled={completedSets.length === 0}
           className={`w-full font-black py-5 rounded-2xl shadow-lg italic tracking-widest transition-all mt-6 ${
             completedSets.length > 0 
-              ? 'bg-blue-600 text-white shadow-blue-900/20 hover:bg-blue-500' 
-              : 'bg-zinc-900 text-zinc-700 border border-zinc-800'
+              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500 hover:-translate-y-0.5 active:translate-y-0' 
+              : 'bg-zinc-900 text-zinc-700 border border-zinc-800 opacity-50'
           }`}
         >
           LOG SESSION
@@ -201,8 +223,8 @@ export const AppContent = () => {
       if (user && user.id !== 'demo-user') {
         await supabase.from('workouts').insert({
           user_id: user.id,
-          lift_id: selectedLift.id, // mapping needed for real use
-          weight_lbs: totalVolume / completedSets.length, // Avg weight for now
+          lift_id: selectedLift.id,
+          weight_lbs: totalVolume / completedSets.length,
           reps_completed: 5,
           workout_date: new Date().toISOString()
         });
@@ -223,6 +245,7 @@ export const AppContent = () => {
       {activeTab === 'train' && (
         <TrainingView 
           lifts={lifts}
+          history={history}
           week={week}
           cycleWeek={cycleWeek}
           selectedLift={selectedLift}
@@ -237,22 +260,22 @@ export const AppContent = () => {
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} />}
       
-      <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
+      <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-900/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
         <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <Dumbbell size={22} strokeWidth={2.5} />
-          <span className="text-[9px] font-black uppercase tracking-widest">Train</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Train</span>
         </button>
         <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'history' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <History size={22} strokeWidth={2.5} />
-          <span className="text-[9px] font-black uppercase tracking-widest">History</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-inherit">History</span>
         </button>
         <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'stats' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <TrendingUp size={22} strokeWidth={2.5} />
-          <span className="text-[9px] font-black uppercase tracking-widest">Progress</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Progress</span>
         </button>
         <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'settings' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <SettingsIcon size={22} strokeWidth={2.5} />
-          <span className="text-[9px] font-black uppercase tracking-widest">Settings</span>
+          <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Settings</span>
         </button>
       </nav>
     </div>
