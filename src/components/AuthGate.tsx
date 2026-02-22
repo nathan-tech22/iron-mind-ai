@@ -10,14 +10,6 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
-    // Check local storage for guest session FIRST
-    const guestSession = localStorage.getItem('iron-mind-guest');
-    if (guestSession) {
-      setSession({ user: { id: 'demo-user', email: 'guest@iron-mind.ai' } });
-      setLoading(false);
-      return;
-    }
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -27,6 +19,10 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       if (session?.user && session.user.id !== 'demo-user') {
         localStorage.setItem('iron-mind-auth-provider', session.user.app_metadata.provider || 'email');
+      } else if (!session) {
+        // If session is null (logged out), ensure guest flag is also cleared
+        localStorage.removeItem('iron-mind-guest');
+        localStorage.removeItem('iron-mind-auth-provider');
       }
     });
 

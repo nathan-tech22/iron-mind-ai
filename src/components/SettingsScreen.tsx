@@ -19,12 +19,9 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
   ];
 
   const handleLogOut = async () => {
-    localStorage.removeItem('iron-mind-guest');
-    localStorage.removeItem('iron-mind-auth-provider');
+    localStorage.clear(); // Clear ALL local storage
     await supabase.auth.signOut();
-    // In a Next.js App Router client component, window.location.href can be intercepted
-    // Force a full document reload at the root path
-    window.document.location.replace('/');
+    window.document.location.replace('/'); // Force hard redirect
   };
 
   return (
