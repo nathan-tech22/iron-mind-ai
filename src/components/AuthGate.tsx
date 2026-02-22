@@ -33,10 +33,13 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Create a specific redirect URL that includes a timestamp or UUID to bypass potential Vercel/Edge caching
+      const redirectTo = `${window.location.origin}/?auth_callback=${crypto.randomUUID()}`;
+      
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo: redirectTo,
           shouldCreateUser: true
         }
       });
