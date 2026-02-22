@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdateLifts: (l: any[]) => void }) => {
   const [editingTM, setEditingTM] = useState(false);
@@ -16,6 +17,12 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
     { icon: Bell, label: 'Notifications', value: 'Enabled' },
     { icon: Shield, label: 'Privacy & Data', value: '' },
   ];
+
+  const handleLogOut = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('iron-mind-auth-provider');
+    window.location.reload();
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white p-6 pb-32">
@@ -98,7 +105,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
         </div>
       )}
 
-      <button className="mt-12 w-full bg-zinc-900/50 border border-red-900/20 rounded-2xl p-5 flex items-center justify-center gap-3 text-red-500 font-black italic hover:bg-red-500/10 transition-all">
+      <button onClick={handleLogOut} className="mt-12 w-full bg-zinc-900/50 border border-red-900/20 rounded-2xl p-5 flex items-center justify-center gap-3 text-red-500 font-black italic hover:bg-red-500/10 transition-all">
         <LogOut size={20} />
         LOG OUT
       </button>
