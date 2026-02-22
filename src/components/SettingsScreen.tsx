@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X, Camera, Palette, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdateLifts: (l: any[]) => void }) => {
+export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: any[], onUpdateLifts: (l: any[]) => void, history?: any[] }) => {
   const [editingTM, setEditingTM] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [tempLifts, setTempLifts] = useState(lifts);
@@ -43,6 +43,54 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
     setEditingProfile(false);
   };
 
+  const MuscleSkeleton = ({ history }: { history: any[] }) => {
+    // Basic volume aggregation by category
+    const getMuscleSaturation = (category: string) => {
+      const mappings: Record<string, string[]> = {
+        'LEGS': ['SQUAT', 'DEADLIFT'],
+        'CHEST': ['BENCH'],
+        'BACK': ['DEADLIFT'],
+        'SHOULDERS': ['PRESS']
+      };
+      
+      const relatedLifts = mappings[category] || [];
+      const logs = history.filter(h => relatedLifts.includes(h.lift?.toUpperCase()));
+      return Math.min(logs.length * 15, 100); // 15% saturation per session
+    };
+
+    const categories = [
+      { name: 'LEGS', sat: getMuscleSaturation('LEGS') },
+      { name: 'CHEST', sat: getMuscleSaturation('CHEST') },
+      { name: 'BACK', sat: getMuscleSaturation('BACK') },
+      { name: 'SHOULDERS', sat: getMuscleSaturation('SHOULDERS') },
+    ];
+
+    return (
+      <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 mb-8">
+        <div className="flex justify-between items-center mb-6">
+           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Iron Skeleton • Saturation</h3>
+           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 gap-6">
+          {categories.map(c => (
+            <div key={c.name} className="space-y-2">
+              <div className="flex justify-between items-end px-1">
+                <span className="text-[9px] font-black text-zinc-600 tracking-widest">{c.name}</span>
+                <span className="text-[10px] font-black italic text-blue-500">{c.sat}%</span>
+              </div>
+              <div className="h-1.5 w-full bg-black rounded-full overflow-hidden border border-zinc-800">
+                <div 
+                  className="h-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)] transition-all duration-1000" 
+                  style={{ width: `${c.sat}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white p-6 pb-32">
       <header className="mb-10 pt-6 text-left">
@@ -71,6 +119,8 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
           </div>
         </div>
       </button>
+
+      <MuscleSkeleton history={history} />
 
       <div className="space-y-3">
         {sections.map((item, i) => (
@@ -199,7 +249,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.5.0</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.5.1</p>
       </div>
     </div>
   );
