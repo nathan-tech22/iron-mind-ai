@@ -4,7 +4,7 @@ interface PlateProps {
   weight: number;
 }
 
-const Plate: React.FC<PlateProps> = ({ weight }) => {
+const Plate: React.FC<PlateProps & { index: number }> = ({ weight, index }) => {
   const configs: Record<number, { color: string; height: string; width: string }> = {
     45: { color: 'bg-blue-600', height: 'h-20', width: 'w-4' },
     25: { color: 'bg-green-600', height: 'h-16', width: 'w-3' },
@@ -18,13 +18,20 @@ const Plate: React.FC<PlateProps> = ({ weight }) => {
 
   return (
     <div 
-      className={`${config.color} ${config.height} ${config.width} mx-0.5 rounded-sm border border-black/20 shadow-sm`}
+      className={`${config.color} ${config.height} ${config.width} mx-0.5 rounded-sm border border-black/20 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300`}
+      style={{ animationDelay: `${index * 50}ms` }}
       title={`${weight} lbs`}
     />
   );
 };
 
 export const VisualBarbell: React.FC<{ weight: number }> = ({ weight }) => {
+  // Trigger haptic feedback on weight change
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(20);
+    }
+  }, [weight]);
   const calculatePlates = (target: number) => {
     let sideWeight = (target - 45) / 2;
     const plates = [];
@@ -51,12 +58,12 @@ export const VisualBarbell: React.FC<{ weight: number }> = ({ weight }) => {
           <div className="flex w-full justify-between px-12 z-10">
             {/* Left Plates */}
             <div className="flex flex-row-reverse items-center h-20">
-              {plates.map((p, i) => <Plate key={`l-${i}`} weight={p} />)}
+              {plates.map((p, i) => <Plate key={`l-${i}-${weight}`} weight={p} index={i} />)}
             </div>
             
             {/* Right Plates */}
             <div className="flex flex-row items-center h-20">
-              {plates.map((p, i) => <Plate key={`r-${i}`} weight={p} />)}
+              {plates.map((p, i) => <Plate key={`r-${i}-${weight}`} weight={p} index={i} />)}
             </div>
           </div>
         </div>
