@@ -38,7 +38,7 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
       options: { emailRedirectTo: window.location.origin }
     });
     if (error) alert(error.message);
-    else alert('Check your email for the magic link!');
+    else alert('Link sent! Check your inbox.');
   };
 
   if (loading) return (
