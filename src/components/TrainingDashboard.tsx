@@ -258,15 +258,20 @@ export const AppContent = () => {
           try {
             const { data: { user } } = await supabase.auth.getUser();
             if (user && user.id !== 'demo-user') {
-              for (const lift of nextLifts) {
-                // Update based on common 90% TM convention
-                const newTrue1RM = lift.tm / 0.9;
-                await supabase
-                  .from('lifts')
-                  .update({ true_1rm: newTrue1RM })
-                  .eq('user_id', user.id)
-                  .eq('id', lift.id);
-              }
+              // Update all lifts in a single push to avoid race conditions
+              const updates = nextLifts.map(lift => ({
+                id: lift.id,
+                user_id: user.id,
+                name: lift.name.toLowerCase(),
+                true_1rm: lift.tm / 0.9,
+                training_max_pct: 0.9
+              }));
+
+              const { error } = await supabase
+                .from('lifts')
+                .upsert(updates, { onConflict: 'id' });
+              
+              if (error) throw error;
             }
           } catch (e) {
             console.error('Supabase TM Update Failed:', e);
