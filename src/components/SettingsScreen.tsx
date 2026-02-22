@@ -111,7 +111,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.3.6</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.3.7</p>
       </div>
     </div>
   );

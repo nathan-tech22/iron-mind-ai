@@ -8,6 +8,8 @@ import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
 
+import { ironVault } from '@/lib/vault-logic';
+
 const initialLiftsData = [
   { id: '1', name: 'SQUAT', tm: 315 },
   { id: '2', name: 'BENCH', tm: 225 },
@@ -233,6 +235,9 @@ export const AppContent = () => {
     };
 
     initializeData();
+
+    // Trigger background vault sync
+    ironVault.sync();
   }, []);
 
   // Auto-advance logic
@@ -345,10 +350,26 @@ export const AppContent = () => {
           workout_date: new Date().toISOString()
         });
         
-        if (error) throw error;
+        if (error) {
+          // Queue to Vault on failure
+          ironVault.queueWorkout({
+            lift_id: selectedLift.id,
+            weight_used: weightUsed,
+            reps_completed: actualReps
+          });
+          console.warn('Sync failed, saved to Iron Vault.');
+        } else {
+          // Attempt to clear vault if online
+          ironVault.sync();
+        }
       }
     } catch (e) {
       console.error('Supabase Sync Failed:', e);
+      ironVault.queueWorkout({
+        lift_id: selectedLift.id,
+        weight_used: weightUsed,
+        reps_completed: actualReps
+      });
     }
 
     const updatedHistory = [newLog, ...history];
