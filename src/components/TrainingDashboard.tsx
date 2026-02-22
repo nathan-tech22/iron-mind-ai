@@ -236,6 +236,45 @@ export const AppContent = () => {
   }, []);
 
   // Auto-advance logic
+  useEffect(() => {
+    const advanceCycle = async () => {
+      if (showSuccess && week === 4) {
+        const shouldAdvance = window.confirm("Cycle Complete! Advance Training Maxes?");
+        if (shouldAdvance) {
+          const nextLifts = lifts.map(l => ({
+            ...l,
+            tm: l.tm + (l.name === 'SQUAT' || l.name === 'DEADLIFT' ? 10 : 5)
+          }));
+          
+          setLifts(nextLifts);
+          localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
+
+          // Supabase Update
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user && user.id !== 'demo-user') {
+              for (const lift of nextLifts) {
+                // Update based on common 90% TM convention
+                const newTrue1RM = lift.tm / 0.9;
+                await supabase
+                  .from('lifts')
+                  .update({ true_1rm: newTrue1RM })
+                  .eq('user_id', user.id)
+                  .eq('id', lift.id);
+              }
+            }
+          } catch (e) {
+            console.error('Supabase TM Update Failed:', e);
+          }
+
+          setWeek(1);
+          alert("Training Maxes increased. Time to eat.");
+        }
+      }
+    };
+
+    advanceCycle();
+  }, [showSuccess, week]);
 
   useEffect(() => {
     if (showSuccess) {
