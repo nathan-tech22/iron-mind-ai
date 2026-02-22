@@ -32,13 +32,21 @@ export const VisualBarbell: React.FC<{ weight: number }> = ({ weight }) => {
       window.navigator.vibrate(20);
     }
   }, [weight]);
+
   const calculatePlates = (target: number) => {
+    // 45lb Barbell standard
     let sideWeight = (target - 45) / 2;
     const plates = [];
-    const denominations = [45, 25, 15, 10, 5, 2.5];
+    
+    // Sort denominations to ensure largest plates are used first
+    const denominations = [45, 25, 10, 5, 2.5]; // Standard commercial set
 
+    // Handle 15lb plates only if specific math allows it (e.g. bumper sets)
+    // For now stick to strict 45/25/10 logic for "Industrial" feel
+    
     for (const d of denominations) {
-      while (sideWeight >= d) {
+      // Use a small epsilon to handle floating point math with 2.5lb plates
+      while (sideWeight >= d - 0.01) {
         plates.push(d);
         sideWeight -= d;
       }
