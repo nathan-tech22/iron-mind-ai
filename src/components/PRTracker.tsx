@@ -1,7 +1,51 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, ArrowUpRight, Trophy, Calendar, Target, Activity, X } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, Trophy, Calendar, Target, Activity, X, Flame } from 'lucide-react';
 import { estimate1RM } from '@/lib/iron-logic';
 import { supabase } from '@/lib/supabase';
+
+const IntensityHeatmap = ({ history }: { history: any[] }) => {
+  // Generate last 14 days
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (13 - i));
+    return d.toLocaleDateString();
+  });
+
+  const intensityMap = history.reduce((acc: Record<string, number>, curr) => {
+    const date = new Date(curr.date).toLocaleDateString();
+    acc[date] = (acc[date] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <div className="mt-8 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6">
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Flame size={16} className="text-orange-500" />
+          <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Intensity Heatmap</h3>
+        </div>
+        <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Last 14 Days</span>
+      </div>
+      <div className="flex justify-between items-end gap-1.5 h-12">
+        {days.map((date, i) => {
+          const count = intensityMap[date] || 0;
+          const opacity = count === 0 ? 0.05 : Math.min(0.2 + (count * 0.2), 1);
+          return (
+            <div 
+              key={i} 
+              className="flex-1 rounded-sm bg-blue-500 transition-all duration-700"
+              style={{ 
+                height: count === 0 ? '20%' : `${Math.min(40 + (count * 20), 100)}%`,
+                opacity 
+              }}
+              title={`${date}: ${count} sessions`}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 const ProgressChart = ({ history, liftName }: { history: any[], liftName: string }) => {
   const liftData = history
@@ -162,7 +206,9 @@ export const PRTracker = () => {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <IntensityHeatmap history={fullHistory} />
+
+      <div className="space-y-4 mt-8">
         <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] px-1">Hall of Fame</h3>
         {prHistory.map((pr, i) => (
           <div 
