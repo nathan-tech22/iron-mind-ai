@@ -90,6 +90,41 @@ export const analyzeProgress = (history: any[], lifts: any[]) => {
         });
       }
     }
+
+    // Tactical Form Cues
+    const formCues: Record<string, string[]> = {
+      'SQUAT': [
+        "Drive your upper back into the bar. Keep the chest proud.",
+        "Brace your core like you're about to take a punch.",
+        "Root your big toe and heel into the floor. Spread the floor."
+      ],
+      'BENCH': [
+        "Leg drive is active. Push your heels into the floor.",
+        "Bend the bar. Engage your lats before the descent.",
+        "Control the eccentric. Touch the same spot every rep."
+      ],
+      'DEADLIFT': [
+        "Pull the slack out of the bar before you move.",
+        "Push the floor away. Don't pull the bar up.",
+        "Legs do the work, back just holds the line."
+      ],
+      'PRESS': [
+        "Squeeze your glutes and quads. Build a rigid foundation.",
+        "Punch through the ceiling. Head forward at the top.",
+        "Keep the elbows slightly tucked. Vertical forearms."
+      ]
+    };
+
+    const cues = formCues[lift.name?.toUpperCase()];
+    if (cues) {
+      const cue = cues[new Date().getDay() % cues.length];
+      insights.push({
+        type: 'FORM',
+        lift: lift.name,
+        message: `TACTICAL: ${cue}`,
+        actionable: false
+      });
+    }
   });
 
   return insights;
