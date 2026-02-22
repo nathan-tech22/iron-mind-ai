@@ -21,13 +21,20 @@ export const PRTracker = () => {
         if (workouts && workouts.length > 0) {
           const bests: Record<string, any> = {};
           workouts.forEach((w: any) => {
-            const est = estimate1RM.epley(w.weight_lbs, w.reps_completed);
-            const liftName = w.lifts?.name || 'UNKNOWN';
+            const weightUsed = w.weight_used || 0;
+            const reps = w.reps_completed || 0;
+            const est = estimate1RM.epley(weightUsed, reps);
+            const liftName = w.lifts?.name?.toUpperCase() || 'UNKNOWN';
+            
             if (!bests[liftName] || est > bests[liftName].est1RM) {
-              bests[liftName] = { lift: liftName, est1RM: est, date: new Date(w.workout_date).toLocaleDateString() };
+              bests[liftName] = { 
+                lift: liftName, 
+                est1RM: est, 
+                date: new Date(w.workout_date).toLocaleDateString() 
+              };
             }
           });
-          setPrHistory(Object.values(bests));
+          setPrHistory(Object.values(bests).sort((a, b) => b.est1RM - a.est1RM));
           setLoading(false);
           return;
         }
@@ -54,6 +61,17 @@ export const PRTracker = () => {
   }, []);
 
   const king = prHistory.length > 0 ? prHistory.reduce((prev, current) => (prev.est1RM > current.est1RM) ? prev : current) : null;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Calculating Gains...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-black text-white p-6 pb-32">
