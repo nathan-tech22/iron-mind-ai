@@ -27,7 +27,8 @@ const TrainingView = ({
   logWorkout,
   showSuccess 
 }: any) => {
-  const workoutSets = calculateWorkout(selectedLift.tm, week);
+  const [tmSetting, setTmSetting] = useState(90); // Default 90%
+  const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
   const activeWeight = completedSets.length > 0 
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
@@ -101,7 +102,12 @@ const TrainingView = ({
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">
             <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Main Sets</h2>
-            <span className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">90% TM</span>
+            <button 
+              onClick={() => setTmSetting(prev => prev === 90 ? 85 : 90)}
+              className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
+            >
+              {tmSetting}% TM
+            </button>
           </div>
           
           {workoutSets.map((set, i) => (
@@ -162,35 +168,56 @@ export const AppContent = () => {
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Auto-advance logic
+  // Load Lifts from Supabase
   useEffect(() => {
-    if (showSuccess && week === 4) {
-      // If we just logged a deload week, prompt for cycle advance
-      const shouldAdvance = window.confirm("Cycle Complete! Advance Training Maxes?");
-      if (shouldAdvance) {
-        const nextLifts = lifts.map(l => ({
-          ...l,
-          tm: l.tm + (l.name === 'SQUAT' || l.name === 'DEADLIFT' ? 10 : 5)
-        }));
-        setLifts(nextLifts);
-        localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
-        setWeek(1);
-        alert("Training Maxes increased. Time to eat.");
+    const fetchLifts = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user && user.id !== 'demo-user') {
+          const { data, error } = await supabase
+            .from('lifts')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            // Map DB schema to UI state
+            const mappedLifts = data.map(l => ({
+              id: l.id,
+              name: l.name.toUpperCase(),
+              tm: Math.round(l.true_1rm * (l.training_max_pct || 0.9))
+            }));
+            setLifts(mappedLifts);
+            setSelectedLift(mappedLifts[0]);
+          }
+        } else {
+          // Fallback to LocalStorage for Guest/Demo
+          const savedLifts = localStorage.getItem('iron-mind-lifts');
+          if (savedLifts) {
+            const parsedLifts = JSON.parse(savedLifts);
+            setLifts(parsedLifts);
+            setSelectedLift(parsedLifts[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching lifts:', err);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [showSuccess, week]);
+    };
 
-  useEffect(() => {
-    const savedLifts = localStorage.getItem('iron-mind-lifts');
-    if (savedLifts) {
-      const parsedLifts = JSON.parse(savedLifts);
-      setLifts(parsedLifts);
-      setSelectedLift(parsedLifts[0]);
-    }
+    fetchLifts();
+    
     const savedHistory = localStorage.getItem('iron-mind-history');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, []);
+
+  // Auto-advance logic
 
   useEffect(() => {
     if (showSuccess) {
@@ -254,6 +281,17 @@ export const AppContent = () => {
     setCompletedSets([]);
     setShowSuccess(true);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Synchronizing Iron...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white pb-32">

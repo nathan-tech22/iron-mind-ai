@@ -1,4 +1,9 @@
-export const calculateWorkout = (tm: number, week: number) => {
+export const calculateWorkout = (tm: number, week: number, tmOverride?: number) => {
+  // If a temporary override is provided (e.g. testing 85% vs 90%), 
+  // we adjust the base TM before calculating percentages.
+  // Standard 5/3/1 is usually calculated off 90% of 1RM.
+  const effectiveTM = tmOverride ? (tm * (tmOverride / 90)) : tm;
+
   // 5/3/1 standard percentages
   const schemes: Record<number, number[]> = {
     1: [0.65, 0.75, 0.85], // Week 1: 3x5
@@ -19,7 +24,7 @@ export const calculateWorkout = (tm: number, week: number) => {
 
   return currentScheme.map((pct, i) => ({
     percentage: Math.round(pct * 100),
-    weight: Math.round((tm * pct) / 5) * 5, // Round to nearest 5lbs
+    weight: Math.round((effectiveTM * pct) / 5) * 5, // Round to nearest 5lbs
     reps: currentReps[i],
   }));
 };
