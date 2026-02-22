@@ -61,6 +61,35 @@ export const analyzeProgress = (history: any[], lifts: any[]) => {
         actionable: false
       });
     }
+
+    // NEW AI INSIGHT: Multi-Cycle Trend Engine (Phase 17)
+    // Compare most recent session to 4 sessions ago (one full cycle back)
+    if (liftLogs.length >= 5) {
+      const currentSession = liftLogs[0];
+      const previousCycleSession = liftLogs[4];
+
+      const currentEst = estimate1RM.epley(parseFloat(String(currentSession.volume || '0').replace(/,/g, '')) / (parseInt(currentSession.sets) || 1), 5);
+      const prevEst = estimate1RM.epley(parseFloat(String(previousCycleSession.volume || '0').replace(/,/g, '')) / (parseInt(previousCycleSession.sets) || 1), 5);
+
+      const diff = currentEst - prevEst;
+      const pct = ((diff / prevEst) * 100).toFixed(1);
+
+      if (diff > 0) {
+        insights.push({
+          type: 'TREND_UP',
+          lift: lift.name,
+          message: `Cycle-over-Cycle growth on ${lift.name}: +${pct}% (+${Math.round(diff)} lbs). The engine is accelerating.`,
+          actionable: false
+        });
+      } else if (diff < -5) {
+        insights.push({
+          type: 'TREND_DOWN',
+          lift: lift.name,
+          message: `Velocity on ${lift.name} has dipped ${Math.abs(Number(pct))}% vs last cycle. Audit your sleep and recovery.`,
+          actionable: false
+        });
+      }
+    }
   });
 
   return insights;
