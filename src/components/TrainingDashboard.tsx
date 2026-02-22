@@ -182,7 +182,7 @@ export const AppContent = () => {
     );
   };
 
-  const logWorkout = () => {
+  const logWorkout = async () => {
     if (completedSets.length === 0) return;
     
     const workoutSets = calculateWorkout(selectedLift.tm, week);
@@ -194,6 +194,22 @@ export const AppContent = () => {
       volume: totalVolume.toLocaleString()
     };
     
+    // Cloud Sync logic
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== 'demo-user') {
+        await supabase.from('workouts').insert({
+          user_id: user.id,
+          lift_id: selectedLift.id, // mapping needed for real use
+          weight_lbs: totalVolume / completedSets.length, // Avg weight for now
+          reps_completed: 5,
+          workout_date: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.error('Sync failed, falling back to local storage');
+    }
+
     const updatedHistory = [newLog, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
