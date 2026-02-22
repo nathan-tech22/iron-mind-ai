@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
 import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { analyzeProgress } from '@/lib/coach-logic';
 import { PRTracker } from './PRTracker';
@@ -90,11 +89,6 @@ const TrainingView = ({
                 {lift.name}
               </div>
               <div className="text-xl font-black italic">{lift.tm}</div>
-              {insights.some((i: any) => i.lift === lift.name && i.type === 'LEAP') && (
-                <div className="absolute top-2 right-2">
-                  <AlertCircle size={12} className="text-blue-200 animate-pulse" />
-                </div>
-              )}
             </button>
           ))}
         </div>
@@ -144,7 +138,7 @@ const TrainingView = ({
           disabled={completedSets.length === 0}
           className={`w-full font-black py-5 rounded-2xl shadow-lg italic tracking-widest transition-all mt-6 ${
             completedSets.length > 0 
-              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500 hover:-translate-y-0.5 active:translate-y-0' 
+              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500' 
               : 'bg-zinc-900 text-zinc-700 border border-zinc-800 opacity-50'
           }`}
         >
@@ -164,7 +158,6 @@ export const AppContent = () => {
   const [week, setWeek] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Persistent Storage Logic
   useEffect(() => {
     const savedLifts = localStorage.getItem('iron-mind-lifts');
     if (savedLifts) {
@@ -172,7 +165,6 @@ export const AppContent = () => {
       setLifts(parsedLifts);
       setSelectedLift(parsedLifts[0]);
     }
-    
     const savedHistory = localStorage.getItem('iron-mind-history');
     if (savedHistory) setHistory(JSON.parse(savedHistory));
   }, []);
@@ -205,9 +197,8 @@ export const AppContent = () => {
     );
   };
 
-  const logWorkout = async () => {
+  const logWorkout = () => {
     if (completedSets.length === 0) return;
-    
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
     const newLog = {
@@ -216,23 +207,6 @@ export const AppContent = () => {
       sets: completedSets.length,
       volume: totalVolume.toLocaleString()
     };
-    
-    // Cloud Sync logic
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && user.id !== 'demo-user') {
-        await supabase.from('workouts').insert({
-          user_id: user.id,
-          lift_id: selectedLift.id,
-          weight_lbs: totalVolume / completedSets.length,
-          reps_completed: 5,
-          workout_date: new Date().toISOString()
-        });
-      }
-    } catch (e) {
-      console.error('Sync failed, falling back to local storage');
-    }
-
     const updatedHistory = [newLog, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
@@ -260,7 +234,7 @@ export const AppContent = () => {
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} />}
       
-      <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-900/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
+      <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
         <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <Dumbbell size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Train</span>
