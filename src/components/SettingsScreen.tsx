@@ -19,8 +19,9 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
   ];
 
   const handleLogOut = async () => {
-    await supabase.auth.signOut();
+    localStorage.removeItem('iron-mind-guest');
     localStorage.removeItem('iron-mind-auth-provider');
+    await supabase.auth.signOut();
     window.location.reload();
   };
 

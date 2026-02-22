@@ -10,6 +10,14 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
   const [isSignUp, setIsSignUp] = useState(false);
 
   useEffect(() => {
+    // Check local storage for guest session FIRST
+    const guestSession = localStorage.getItem('iron-mind-guest');
+    if (guestSession) {
+      setSession({ user: { id: 'demo-user', email: 'guest@iron-mind.ai' } });
+      setLoading(false);
+      return;
+    }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -78,7 +86,10 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
         <div className="pt-4">
           <button 
             type="button"
-            onClick={() => setSession({ user: { id: 'demo-user', email: 'guest@iron-mind.ai' } })}
+            onClick={() => {
+              localStorage.setItem('iron-mind-guest', 'true');
+              setSession({ user: { id: 'demo-user', email: 'guest@iron-mind.ai' } });
+            }}
             className="w-full py-4 rounded-2xl font-bold text-zinc-600 hover:text-zinc-400 transition-colors"
           >
             CONTINUE AS GUEST
