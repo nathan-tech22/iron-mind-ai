@@ -3,8 +3,51 @@ import { TrendingUp, ArrowUpRight, Trophy, Calendar, Target, Activity, X } from 
 import { estimate1RM } from '@/lib/iron-logic';
 import { supabase } from '@/lib/supabase';
 
+const ProgressChart = ({ history, liftName }: { history: any[], liftName: string }) => {
+  const liftData = history
+    .filter(h => h.lift?.toUpperCase() === liftName?.toUpperCase())
+    .slice(0, 7) // Last 7 sessions
+    .reverse();
+
+  if (liftData.length < 2) return null;
+
+  const max = Math.max(...liftData.map(d => d.est1RM));
+  const min = Math.min(...liftData.map(d => d.est1RM));
+  const range = max - min || 10;
+
+  return (
+    <div className="mt-8 space-y-4 animate-in fade-in duration-500">
+      <div className="flex justify-between items-end px-1">
+        <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em]">7-Session Trend</h3>
+        <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Calculated Peak</span>
+      </div>
+      <div className="h-24 flex items-end justify-between gap-1 px-2">
+        {liftData.map((d, i) => {
+          const height = ((d.est1RM - min) / range) * 100;
+          return (
+            <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+              <div className="relative w-full flex justify-center items-end h-full">
+                <div 
+                  className="w-full bg-blue-600/20 rounded-t-lg group-hover:bg-blue-600/40 transition-all duration-500"
+                  style={{ height: `${Math.max(height, 5)}%` }}
+                />
+                <div 
+                  className="absolute bottom-0 w-full bg-blue-500 rounded-t-lg shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-500"
+                  style={{ height: `${Math.max(height, 5)}%`, opacity: 0.8 }}
+                />
+              </div>
+              <span className="text-[8px] font-black text-zinc-700 italic">{d.est1RM}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 export const PRTracker = () => {
   const [prHistory, setPrHistory] = useState<any[]>([]);
+  const [fullHistory, setFullHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPR, setSelectedPR] = useState<any>(null);
 
@@ -19,21 +62,20 @@ export const PRTracker = () => {
           .order('workout_date', { ascending: false });
         
         if (workouts && workouts.length > 0) {
+          const allCalculated = workouts.map((w: any) => ({
+            lift: w.lifts?.name?.toUpperCase() || 'UNKNOWN',
+            est1RM: estimate1RM.epley(w.weight_used || 0, w.reps_completed || 0),
+            date: new Date(w.workout_date).toLocaleDateString()
+          }));
+
           const bests: Record<string, any> = {};
-          workouts.forEach((w: any) => {
-            const weightUsed = w.weight_used || 0;
-            const reps = w.reps_completed || 0;
-            const est = estimate1RM.epley(weightUsed, reps);
-            const liftName = w.lifts?.name?.toUpperCase() || 'UNKNOWN';
-            
-            if (!bests[liftName] || est > bests[liftName].est1RM) {
-              bests[liftName] = { 
-                lift: liftName, 
-                est1RM: est, 
-                date: new Date(w.workout_date).toLocaleDateString() 
-              };
+          allCalculated.forEach((item: any) => {
+            if (!bests[item.lift] || item.est1RM > bests[item.lift].est1RM) {
+              bests[item.lift] = item;
             }
           });
+
+          setFullHistory(allCalculated);
           setPrHistory(Object.values(bests).sort((a, b) => b.est1RM - a.est1RM));
           setLoading(false);
           return;
@@ -98,6 +140,8 @@ export const PRTracker = () => {
             <ArrowUpRight size={16} />
             <span>Top Tier Performance</span>
           </div>
+
+          <ProgressChart history={fullHistory} liftName={king.lift} />
         </div>
       ) : (
         <div className="py-20 text-center border-2 border-dashed border-zinc-900 rounded-[3rem] mb-8">
@@ -160,6 +204,8 @@ export const PRTracker = () => {
               <div className="text-6xl font-black italic text-white tracking-tighter">{selectedPR.est1RM}</div>
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Calculated Peak 1RM (LBS)</div>
             </div>
+
+            <ProgressChart history={fullHistory} liftName={selectedPR.lift} />
           </div>
 
           <div className="flex-1 space-y-6">
