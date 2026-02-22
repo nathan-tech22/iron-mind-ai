@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
 import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { analyzeProgress } from '@/lib/coach-logic';
 import { PRTracker } from './PRTracker';
@@ -201,8 +202,9 @@ export const AppContent = () => {
     );
   };
 
-  const logWorkout = () => {
+  const logWorkout = async () => {
     if (completedSets.length === 0) return;
+    
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
     const newLog = {
@@ -211,6 +213,23 @@ export const AppContent = () => {
       sets: completedSets.length,
       volume: totalVolume.toLocaleString()
     };
+    
+    // Auto-Cloud Sync (Background)
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== 'demo-user') {
+        await supabase.from('workouts').insert({
+          user_id: user.id,
+          lift_id: selectedLift.id,
+          weight_lbs: totalVolume / completedSets.length,
+          reps_completed: 5,
+          workout_date: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.log('Background sync standby');
+    }
+
     const updatedHistory = [newLog, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
