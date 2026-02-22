@@ -36,18 +36,20 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin
-      }
-    });
-    setLoading(false);
-    
-    if (error) {
-      alert(error.message);
-    } else {
-      alert('Magic Link sent! Please check your inbox to sign in.');
+    try {
+      const { data, error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+      alert('Magic Link sent! Please check your inbox and click the link to sign in.');
+    } catch (error: any) {
+      console.error("Auth error:", error);
+      alert(`Login failed: ${error.message || 'Please check your Supabase rate limits.'}`);
+    } finally {
+      setLoading(false);
     }
   };
 
