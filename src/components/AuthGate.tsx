@@ -27,19 +27,19 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        alert(error.message);
-      } else {
-        if (!data.session) {
-          alert('Account created! Note: If you do not get an email, turn off "Confirm Email" in your Supabase Auth settings, then try signing in.');
-          setIsSignUp(false);
-        }
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin
       }
+    });
+    setLoading(false);
+    
+    if (error) {
+      alert(error.message);
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert(error.message);
+      alert('Magic Link sent! Please check your inbox to sign in.');
     }
   };
 
@@ -63,14 +63,6 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm mb-3 outline-none focus:border-blue-500 transition-colors"
-            required
-          />
-          <input 
-            type="password" 
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm mb-4 outline-none focus:border-blue-500 transition-colors"
             required
           />
@@ -78,18 +70,10 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
             type="submit"
             className="w-full bg-blue-600 text-white py-4 rounded-xl font-black italic tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-3"
           >
-            {isSignUp ? <UserPlus size={18} /> : <LogIn size={18} />}
-            {isSignUp ? 'CREATE ACCOUNT' : 'SECURE LOGIN'}
+            <Key size={18} />
+            SEND MAGIC LINK
           </button>
         </div>
-
-        <button 
-          type="button"
-          onClick={() => setIsSignUp(!isSignUp)}
-          className="text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
-        >
-          {isSignUp ? 'Already have an account? Sign In' : 'Need an account? Sign Up'}
-        </button>
 
         <div className="pt-4">
           <button 
