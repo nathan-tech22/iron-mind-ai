@@ -31,6 +31,10 @@ const TrainingView = ({
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
 
+  const handleSetToggle = (index: number) => {
+    toggleSet(index);
+  };
+
   const insights = analyzeProgress(history, lifts);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
