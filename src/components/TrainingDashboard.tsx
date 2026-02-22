@@ -42,6 +42,20 @@ const TrainingView = ({
   const insights = analyzeProgress(history, lifts);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
+  // Recovery readiness logic
+  const getReadiness = (liftName: string) => {
+    const liftLogs = history.filter((h: any) => h.lift?.toUpperCase() === liftName.toUpperCase());
+    if (liftLogs.length === 0) return 100;
+    
+    const lastDate = new Date(liftLogs[0].date);
+    const diffDays = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
+    
+    // Simple recovery model: 0-24h (20%), 24-48h (60%), 48h+ (100%)
+    if (diffDays === 0) return 20;
+    if (diffDays === 1) return 60;
+    return 100;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left relative overflow-hidden">
       {showSuccess && (
@@ -81,24 +95,35 @@ const TrainingView = ({
         )}
 
         <div className="grid grid-cols-2 gap-3">
-          {lifts.map((lift: any) => (
-            <button
-              key={lift.id}
-              onClick={() => setSelectedLift(lift)}
-              className={`p-4 rounded-2xl border transition-all text-left relative overflow-hidden ${
-                selectedLift.id === lift.id 
-                  ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]' 
-                  : 'bg-zinc-900 border-zinc-800'
-              }`}
-            >
-              <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
-                selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
-              }`}>
-                {lift.name}
-              </div>
-              <div className="text-xl font-black italic">{lift.tm}</div>
-            </button>
-          ))}
+          {lifts.map((lift: any) => {
+            const readiness = getReadiness(lift.name);
+            return (
+              <button
+                key={lift.id}
+                onClick={() => setSelectedLift(lift)}
+                className={`p-4 rounded-2xl border transition-all text-left relative overflow-hidden group ${
+                  selectedLift.id === lift.id 
+                    ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]' 
+                    : 'bg-zinc-900 border-zinc-800'
+                }`}
+              >
+                {/* Readiness Glow */}
+                <div 
+                  className={`absolute bottom-0 left-0 h-1 transition-all duration-1000 ${
+                    readiness < 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${readiness}%`, opacity: selectedLift.id === lift.id ? 1 : 0.3 }}
+                />
+                
+                <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
+                  selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
+                }`}>
+                  {lift.name}
+                </div>
+                <div className="text-xl font-black italic">{lift.tm}</div>
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-3">
