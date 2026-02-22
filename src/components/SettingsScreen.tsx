@@ -4,9 +4,14 @@ import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X } from 'l
 export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdateLifts: (l: any[]) => void }) => {
   const [editingTM, setEditingTM] = useState(false);
   const [tempLifts, setTempLifts] = useState(lifts);
+  const [authProvider, setAuthProvider] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAuthProvider(localStorage.getItem('iron-mind-auth-provider'));
+  }, []);
   
   const sections = [
-    { icon: User, label: 'Profile Settings', value: 'Nathan Kennedy' },
+    { icon: User, label: 'Account Type', value: authProvider ? authProvider.toUpperCase() : 'GUEST' },
     { icon: Weight, label: 'Edit Training Maxes', value: 'ACTIVE', action: () => setEditingTM(true) },
     { icon: Bell, label: 'Notifications', value: 'Enabled' },
     { icon: Shield, label: 'Privacy & Data', value: '' },
@@ -99,7 +104,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.1.8</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.1.9</p>
       </div>
     </div>
   );

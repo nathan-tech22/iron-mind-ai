@@ -14,6 +14,9 @@ export const AuthGate = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session?.user && session.user.id !== 'demo-user') {
+        localStorage.setItem('iron-mind-auth-provider', session.user.app_metadata.provider || 'email');
+      }
     });
 
     return () => subscription.unsubscribe();
