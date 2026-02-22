@@ -22,8 +22,9 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
     localStorage.removeItem('iron-mind-guest');
     localStorage.removeItem('iron-mind-auth-provider');
     await supabase.auth.signOut();
-    // Use standard window.location instead of router to force hard refresh
-    window.location.href = '/';
+    // In a Next.js App Router client component, window.location.href can be intercepted
+    // Force a full document reload at the root path
+    window.document.location.replace('/');
   };
 
   return (
@@ -113,7 +114,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts }: { lifts: any[], onUpdat
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.2.7</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.2.8</p>
       </div>
     </div>
   );
