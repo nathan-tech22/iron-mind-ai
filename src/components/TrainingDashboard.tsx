@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
 import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
