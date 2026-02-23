@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { History, Calendar, Dumbbell, ChevronRight, X, Activity, TrendingUp, Zap } from 'lucide-react';
 import { estimate1RM } from '@/lib/iron-logic';
 
-export const HistoryScreen = ({ logs }: { logs: any[] }) => {
-  const [selectedLog, setSelectedLog] = useState<any>(null);
+import { WorkoutLog } from '@/lib/types';
+
+export const HistoryScreen = ({ logs }: { logs: WorkoutLog[] }) => {
+  const [selectedLog, setSelectedLog] = useState<WorkoutLog | null>(null);
 
   // Helper to calculate intensity (relative to some baseline or just raw est1RM)
-  const calculateIntensity = (log: any) => {
-    const vol = parseFloat(log.volume?.replace(/,/g, '') || '0');
-    const sets = parseInt(log.sets) || 1;
+  const calculateIntensity = (log: WorkoutLog) => {
+    const vol = parseFloat(String(log.volume || '0').replace(/,/g, ''));
+    const sets = parseInt(String(log.sets)) || 1;
     const avgWeight = vol / sets;
     return estimate1RM.epley(avgWeight, 5); // Estimate 1RM for this specific session
   };
@@ -100,14 +102,14 @@ export const HistoryScreen = ({ logs }: { logs: any[] }) => {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-zinc-500 uppercase">Intensity Rank</span>
-                    <span className={`text-sm font-black italic ${selectedLog.intensity > 300 ? 'text-red-500' : 'text-emerald-500'}`}>
-                      {selectedLog.intensity > 350 ? 'ELITE' : selectedLog.intensity > 250 ? 'HEAVY' : 'MODERATE'}
+                    <span className={`text-sm font-black italic ${(selectedLog.intensity ?? 0) > 300 ? 'text-red-500' : 'text-emerald-500'}`}>
+                      {(selectedLog.intensity ?? 0) > 350 ? 'ELITE' : (selectedLog.intensity ?? 0) > 250 ? 'HEAVY' : 'MODERATE'}
                     </span>
                   </div>
                   <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
                     <div 
                       className="bg-blue-600 h-full transition-all duration-1000" 
-                      style={{ width: `${Math.min((selectedLog.intensity / 500) * 100, 100)}%` }}
+                      style={{ width: `${Math.min(((selectedLog.intensity ?? 0) / 500) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -115,7 +117,7 @@ export const HistoryScreen = ({ logs }: { logs: any[] }) => {
 
              <div className="px-2">
                 <p className="text-zinc-500 text-[10px] font-bold uppercase leading-relaxed tracking-widest">
-                  This session represents a {selectedLog.intensity > 300 ? 'heavy' : 'moderate'} load for your central nervous system. Prioritize protein and sleep for the next 24 hours to maximize adaptation.
+                  This session represents a {(selectedLog.intensity ?? 0) > 300 ? 'heavy' : 'moderate'} load for your central nervous system. Prioritize protein and sleep for the next 24 hours to maximize adaptation.
                 </p>
              </div>
           </div>

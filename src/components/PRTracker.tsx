@@ -3,7 +3,9 @@ import { TrendingUp, ArrowUpRight, Trophy, Calendar, Target, Activity, X, Flame 
 import { estimate1RM } from '@/lib/iron-logic';
 import { supabase } from '@/lib/supabase';
 
-const IntensityHeatmap = ({ history }: { history: any[] }) => {
+import { WorkoutLog, CalculatedPR } from '@/lib/types';
+
+const IntensityHeatmap = ({ history }: { history: WorkoutLog[] }): React.ReactElement => {
   // Generate last 14 days
   const days = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
@@ -47,7 +49,7 @@ const IntensityHeatmap = ({ history }: { history: any[] }) => {
   );
 };
 
-const StructuralBalance = ({ history }: { history: any[] }) => {
+const StructuralBalance = ({ history }: { history: CalculatedPR[] }): React.ReactElement | null => {
   const getBest = (name: string) => {
     const logs = history.filter(h => h.lift?.toUpperCase() === name.toUpperCase());
     return logs.length > 0 ? Math.max(...logs.map(l => l.est1RM)) : 0;
@@ -99,7 +101,7 @@ const StructuralBalance = ({ history }: { history: any[] }) => {
   );
 };
 
-const ProgressChart = ({ history, liftName }: { history: any[], liftName: string }) => {
+const ProgressChart = ({ history, liftName }: { history: CalculatedPR[], liftName: string }) => {
   const liftData = history
     .filter(h => h.lift?.toUpperCase() === liftName?.toUpperCase())
     .slice(0, 7) // Last 7 sessions
@@ -235,6 +237,19 @@ export const PRTracker = () => {
           <div className="mt-4 flex items-center gap-2 text-emerald-500 text-xs font-bold uppercase tracking-wider">
             <ArrowUpRight size={16} />
             <span>Top Tier Performance</span>
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-zinc-800/50">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Milestone Tracker</span>
+              <span className="text-[9px] font-bold text-blue-500 uppercase tracking-widest italic">Road to 2-Plate</span>
+            </div>
+            <div className="h-1.5 w-full bg-black rounded-full overflow-hidden border border-zinc-800">
+               <div 
+                className="h-full bg-gradient-to-r from-blue-600 to-blue-400 shadow-[0_0_10px_rgba(37,99,235,0.4)] transition-all duration-1000" 
+                style={{ width: `${Math.min((king.est1RM / 225) * 100, 100)}%` }}
+              />
+            </div>
           </div>
 
           <ProgressChart history={fullHistory} liftName={king.lift} />

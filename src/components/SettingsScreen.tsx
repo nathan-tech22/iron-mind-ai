@@ -2,14 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X, Camera, Palette, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
-export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: any[], onUpdateLifts: (l: any[]) => void, history?: any[] }) => {
+import { Lift, WorkoutLog, Profile } from '@/lib/types';
+
+export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: Lift[], onUpdateLifts: (l: Lift[]) => void, history?: WorkoutLog[] }) => {
   const [editingTM, setEditingTM] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
-  const [tempLifts, setTempLifts] = useState(lifts);
+  const [tempLifts, setTempLifts] = useState<Lift[]>(lifts);
   const [authProvider, setAuthProvider] = useState<string | null>(null);
   
   // Profile state
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<Profile>({
     name: 'NATHAN KENNEDY',
     handle: '@NATHAN',
     theme: 'FOUNDER BLACK',
@@ -250,7 +252,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.5</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.6</p>
       </div>
     </div>
   );

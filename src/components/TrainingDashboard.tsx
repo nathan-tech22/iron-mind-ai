@@ -12,12 +12,29 @@ import { LiftFigure } from './LiftFigure';
 
 import { ironVault } from '@/lib/vault-logic';
 
-const initialLiftsData = [
+import { Lift, WorkoutLog } from '@/lib/types';
+
+const initialLiftsData: Lift[] = [
   { id: '1', name: 'SQUAT', tm: 315 },
   { id: '2', name: 'BENCH', tm: 225 },
   { id: '3', name: 'DEADLIFT', tm: 405 },
   { id: '4', name: 'PRESS', tm: 135 },
 ];
+
+interface TrainingViewProps {
+  lifts: Lift[];
+  history: WorkoutLog[];
+  week: number;
+  cycleWeek: (dir: number) => void;
+  selectedLift: Lift;
+  setSelectedLift: (l: Lift) => void;
+  completedSets: number[];
+  toggleSet: (i: number) => void;
+  logWorkout: () => void;
+  showSuccess: boolean;
+  showPR: boolean;
+  onResetTM: (name: string, tm: number) => void;
+}
 
 const TrainingView = ({ 
   lifts, 
@@ -32,7 +49,7 @@ const TrainingView = ({
   showSuccess,
   showPR,
   onResetTM
-}: any) => {
+}: TrainingViewProps) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
   const activeWeight = completedSets.length > 0 
