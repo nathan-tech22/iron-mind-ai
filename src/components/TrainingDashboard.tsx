@@ -8,6 +8,7 @@ import { estimate1RM } from '@/lib/iron-logic';
 import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { LiftFigure } from './LiftFigure';
 
 import { ironVault } from '@/lib/vault-logic';
 
@@ -38,17 +39,13 @@ const TrainingView = ({
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
 
-  const handleSetToggle = (index: number) => {
-    toggleSet(index);
-  };
-
   const insights = analyzeProgress(history, lifts);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
   // Get current PR for the selected lift
   const currentPR = history
     .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
-    .reduce((max, h) => {
+    .reduce((max: number, h: any) => {
       const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
       return est > max ? est : max;
     }, 0);
@@ -146,7 +143,10 @@ const TrainingView = ({
                 }`}>
                   {lift.name}
                 </div>
-                <div className="text-xl font-black italic">{lift.tm}</div>
+                <div className="flex justify-between items-end">
+                  <div className="text-xl font-black italic">{lift.tm}</div>
+                  <LiftFigure name={lift.name} />
+                </div>
               </button>
             );
           })}
@@ -336,7 +336,7 @@ export const AppContent = () => {
     };
 
     advanceCycle();
-  }, [showSuccess, week]);
+  }, [showSuccess, week, lifts]);
 
   useEffect(() => {
     if (showSuccess) {
@@ -369,6 +369,28 @@ export const AppContent = () => {
     setCompletedSets(prev => 
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
+  };
+
+  const handleResetTM = async (liftName: string, newTM: number) => {
+    if (!window.confirm(`Apply adaptive reset to ${liftName} (${newTM} lbs)?`)) return;
+    
+    const nextLifts = lifts.map((l: any) => 
+      l.name.toUpperCase() === liftName.toUpperCase() ? { ...l, tm: newTM } : l
+    );
+    
+    setLifts(nextLifts);
+    localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== 'demo-user') {
+        const liftToUpdate = nextLifts.find((l: any) => l.name.toUpperCase() === liftName.toUpperCase());
+        await supabase.from('lifts').update({ true_1rm: newTM / 0.9 }).eq('id', liftToUpdate.id);
+      }
+      alert('Training Max adjusted. The engine has adapted.');
+    } catch (e) {
+      console.error('Failed to sync adaptive reset');
+    }
   };
 
   const logWorkout = async () => {
@@ -411,7 +433,6 @@ export const AppContent = () => {
         });
         
         if (error) {
-          // Queue to Vault on failure
           ironVault.queueWorkout({
             lift_id: selectedLift.id,
             weight_used: weightUsed,
@@ -419,7 +440,6 @@ export const AppContent = () => {
           });
           console.warn('Sync failed, saved to Iron Vault.');
         } else {
-          // Attempt to clear vault if online
           ironVault.sync();
         }
       }
@@ -438,33 +458,9 @@ export const AppContent = () => {
     setCompletedSets([]);
     setShowSuccess(true);
 
-    // PHASE 26: Adaptive Reset Handler
-    const handleResetTM = async (liftName: string, newTM: number) => {
-      if (!window.confirm(`Apply adaptive reset to ${liftName} (${newTM} lbs)?`)) return;
-      
-      const nextLifts = lifts.map((l: any) => 
-        l.name.toUpperCase() === liftName.toUpperCase() ? { ...l, tm: newTM } : l
-      );
-      
-      setLifts(nextLifts);
-      localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
-
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user && user.id !== 'demo-user') {
-          const liftToUpdate = nextLifts.find((l: any) => l.name.toUpperCase() === liftName.toUpperCase());
-          await supabase.from('lifts').update({ true_1rm: newTM / 0.9 }).eq('id', liftToUpdate.id);
-        }
-        alert('Training Max adjusted. The engine has adapted.');
-      } catch (e) {
-        console.error('Failed to sync adaptive reset');
-      }
-    };
-
-    // PHASE 24: PR Celebration Logic
     const previousBest = history
       .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
-      .reduce((max, h) => {
+      .reduce((max: number, h: any) => {
         const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
         return est > max ? est : max;
       }, 0);
