@@ -151,6 +151,7 @@ const TrainingView = ({
           </div>
         )}
 
+        <div className="grid grid-cols-2 gap-3">
           {lifts.map((lift: any) => {
             const readiness = getReadiness(lift.name);
             const trend = getCycleTrend(lift.name);
@@ -172,25 +173,26 @@ const TrainingView = ({
                   style={{ width: `${readiness}%`, opacity: selectedLift.id === lift.id ? 1 : 0.3 }}
                 />
                 
-                <div className="flex justify-between items-start mb-1">
-                  <div className={`text-[9px] font-black uppercase tracking-[0.2em] ${
-                    selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
-                  }`}>
-                    {lift.name}
-                  </div>
-                  {trend && (
-                    <div className={`text-[8px] font-black italic ${trend.up ? 'text-emerald-400' : 'text-amber-500'}`}>
-                      {trend.up ? '+' : ''}{trend.pct}%
-                    </div>
-                  )}
+                <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
+                  selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
+                }`}>
+                  {lift.name}
                 </div>
                 <div className="flex justify-between items-end">
-                  <div className="text-xl font-black italic">{lift.tm}</div>
+                  <div className="flex flex-col">
+                    <div className="text-xl font-black italic">{lift.tm}</div>
+                    {trend && (
+                      <div className={`text-[8px] font-black italic ${trend.up ? 'text-emerald-500' : 'text-amber-500'}`}>
+                        {trend.up ? '+' : ''}{trend.pct}% CoC
+                      </div>
+                    )}
+                  </div>
                   <LiftFigure name={lift.name} active={selectedLift.id === lift.id} />
                 </div>
               </button>
             );
           })}
+        </div>
 
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">
@@ -256,7 +258,7 @@ const TrainingView = ({
 export const AppContent = () => {
   const [activeTab, setActiveTab] = useState('train');
   const [lifts, setLifts] = useState(initialLiftsData);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<WorkoutLog[]>([]);
   const [selectedLift, setSelectedLift] = useState(initialLiftsData[0]);
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
@@ -391,7 +393,7 @@ export const AppContent = () => {
     }
   }, [showSuccess]);
 
-  const updateLifts = (newLifts: any[]) => {
+  const updateLifts = (newLifts: Lift[]) => {
     setLifts(newLifts);
     localStorage.setItem('iron-mind-lifts', JSON.stringify(newLifts));
   };
@@ -457,7 +459,7 @@ export const AppContent = () => {
   };
 
   const submitWorkout = async (actualReps: number, weightUsed: number, totalVolume: number) => {
-    const newLog = {
+    const newLog: WorkoutLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lift: selectedLift.name,
       sets: completedSets.length,
@@ -507,7 +509,7 @@ export const AppContent = () => {
       .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
       .reduce((max: number, h: any) => {
         const vol = parseFloat(String(h.volume).replace(/,/g, ''));
-        const sets = parseInt(h.sets) || 1;
+        const sets = parseInt(String(h.sets)) || 1;
         const est = estimate1RM.epley(vol / sets, 5);
         return est > max ? est : max;
       }, 0);
