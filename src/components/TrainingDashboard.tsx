@@ -61,8 +61,14 @@ const TrainingView = ({
       {showSuccess && (
         <div className="fixed inset-0 z-[300] bg-blue-600 flex items-center justify-center animate-in fade-in zoom-in duration-300">
            <div className="text-center">
-              <CheckCircle2 size={120} className="text-white mx-auto mb-4" strokeWidth={3} />
-              <h2 className="text-4xl font-black italic text-white tracking-tighter">IRON SAVED</h2>
+              {showPR ? (
+                <Sparkles size={120} className="text-white mx-auto mb-4 animate-bounce" strokeWidth={3} />
+              ) : (
+                <CheckCircle2 size={120} className="text-white mx-auto mb-4" strokeWidth={3} />
+              )}
+              <h2 className="text-4xl font-black italic text-white tracking-tighter">
+                {showPR ? 'NEW RECORD' : 'IRON SAVED'}
+              </h2>
            </div>
         </div>
       )}
@@ -195,6 +201,7 @@ export const AppContent = () => {
   const [completedSets, setCompletedSets] = useState<number[]>([]);
   const [week, setWeek] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showPR, setShowPR] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Load History and Lifts
@@ -313,7 +320,10 @@ export const AppContent = () => {
 
   useEffect(() => {
     if (showSuccess) {
-      const timer = setTimeout(() => setShowSuccess(false), 1500);
+      const timer = setTimeout(() => {
+        setShowSuccess(false);
+        setShowPR(false);
+      }, 1500);
       return () => clearTimeout(timer);
     }
   }, [showSuccess]);
@@ -407,6 +417,33 @@ export const AppContent = () => {
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
     setCompletedSets([]);
     setShowSuccess(true);
+
+    // PHASE 24: PR Celebration Logic
+    const previousBest = history
+      .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
+      .reduce((max, h) => {
+        const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
+        return est > max ? est : max;
+      }, 0);
+
+    const currentEst = estimate1RM.epley(weightUsed, actualReps);
+
+    if (currentEst > previousBest && history.length > 0) {
+      setShowPR(true);
+      setTimeout(() => {
+        try {
+          const confetti = require('canvas-confetti').default;
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#2563eb', '#ffffff', '#60a5fa']
+          });
+        } catch (e) {
+          console.warn('Confetti failed to fire');
+        }
+      }, 300);
+    }
   };
 
   if (loading) {
