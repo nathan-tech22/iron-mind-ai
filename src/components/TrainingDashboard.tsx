@@ -60,8 +60,14 @@ const TrainingView = ({
   const getCycleTrend = (liftName: string) => {
     const logs = history.filter(h => h.lift?.toUpperCase() === liftName.toUpperCase());
     if (logs.length < 5) return null;
-    const current = estimate1RM.epley(parseFloat(String(logs[0].volume).replace(/,/g, '')) / (parseInt(String(logs[0].sets)) || 1), 5);
-    const prev = estimate1RM.epley(parseFloat(String(logs[4].volume).replace(/,/g, '')) / (parseInt(String(logs[4].sets)) || 1), 5);
+    
+    const currentVol = parseFloat(String(logs[0].volume).replace(/,/g, ''));
+    const currentSets = parseInt(String(logs[0].sets)) || 1;
+    const prevVol = parseFloat(String(logs[4].volume).replace(/,/g, ''));
+    const prevSets = parseInt(String(logs[4].sets)) || 1;
+    
+    const current = estimate1RM.epley(currentVol / currentSets, 5);
+    const prev = estimate1RM.epley(prevVol / prevSets, 5);
     const diff = current - prev;
     return { pct: ((diff / prev) * 100).toFixed(1), up: diff >= 0 };
   };
