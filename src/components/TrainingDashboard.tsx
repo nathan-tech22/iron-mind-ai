@@ -44,6 +44,14 @@ const TrainingView = ({
   const insights = analyzeProgress(history, lifts);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
+  // Get current PR for the selected lift
+  const currentPR = history
+    .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
+    .reduce((max, h) => {
+      const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
+      return est > max ? est : max;
+    }, 0);
+
   // Recovery readiness logic
   const getReadiness = (liftName: string) => {
     const liftLogs = history.filter((h: any) => h.lift?.toUpperCase() === liftName.toUpperCase());
@@ -88,7 +96,7 @@ const TrainingView = ({
       </header>
 
       <main className="flex-1 px-4 space-y-6 max-w-2xl mx-auto w-full">
-        <VisualBarbell weight={activeWeight} />
+        <VisualBarbell weight={activeWeight} pr={currentPR} />
 
         {activeInsight && (
           <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500">
