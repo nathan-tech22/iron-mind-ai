@@ -47,8 +47,10 @@ export const analyzeProgress = (history: any[], lifts: any[]) => {
       insights.push({
         type: 'FATIGUE',
         lift: lift.name,
-        message: `Recent ${lift.name} sessions are slowing down. Consider a deload or a 5% Training Max reset next cycle.`,
-        actionable: false
+        message: `Recent ${lift.name} sessions are slowing down. Performance is below 85% of your Training Max.`,
+        actionable: true,
+        actionType: 'RESET_TM',
+        suggestedTM: Math.round((lift.tm * 0.9) / 5) * 5
       });
     }
     

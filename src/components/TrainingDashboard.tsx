@@ -29,7 +29,8 @@ const TrainingView = ({
   toggleSet,
   logWorkout,
   showSuccess,
-  showPR
+  showPR,
+  onResetTM
 }: any) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
@@ -99,13 +100,22 @@ const TrainingView = ({
         <VisualBarbell weight={activeWeight} pr={currentPR} />
 
         {activeInsight && (
-          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500">
+          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500 relative overflow-hidden group">
             <div className="bg-blue-600 p-2 rounded-xl mt-1">
               <Sparkles size={18} className="text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">AI Coaching Intel</div>
               <p className="text-sm font-bold text-zinc-200 leading-tight">{activeInsight.message}</p>
+              
+              {activeInsight.actionable && activeInsight.actionType === 'RESET_TM' && (
+                <button 
+                  onClick={() => onResetTM(activeInsight.lift, activeInsight.suggestedTM)}
+                  className="mt-3 bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20"
+                >
+                  Apply {activeInsight.suggestedTM}lb Reset
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -428,6 +438,29 @@ export const AppContent = () => {
     setCompletedSets([]);
     setShowSuccess(true);
 
+    // PHASE 26: Adaptive Reset Handler
+    const handleResetTM = async (liftName: string, newTM: number) => {
+      if (!window.confirm(`Apply adaptive reset to ${liftName} (${newTM} lbs)?`)) return;
+      
+      const nextLifts = lifts.map((l: any) => 
+        l.name.toUpperCase() === liftName.toUpperCase() ? { ...l, tm: newTM } : l
+      );
+      
+      setLifts(nextLifts);
+      localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
+
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.id !== 'demo-user') {
+          const liftToUpdate = nextLifts.find((l: any) => l.name.toUpperCase() === liftName.toUpperCase());
+          await supabase.from('lifts').update({ true_1rm: newTM / 0.9 }).eq('id', liftToUpdate.id);
+        }
+        alert('Training Max adjusted. The engine has adapted.');
+      } catch (e) {
+        console.error('Failed to sync adaptive reset');
+      }
+    };
+
     // PHASE 24: PR Celebration Logic
     const previousBest = history
       .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
@@ -482,6 +515,7 @@ export const AppContent = () => {
           logWorkout={logWorkout}
           showSuccess={showSuccess}
           showPR={showPR}
+          onResetTM={handleResetTM}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
