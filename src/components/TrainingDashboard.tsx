@@ -4,6 +4,7 @@ import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, 
 import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { analyzeProgress } from '@/lib/coach-logic';
+import { estimate1RM } from '@/lib/iron-logic';
 import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
@@ -27,7 +28,8 @@ const TrainingView = ({
   completedSets, 
   toggleSet,
   logWorkout,
-  showSuccess 
+  showSuccess,
+  showPR
 }: any) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
@@ -471,6 +473,7 @@ export const AppContent = () => {
           toggleSet={toggleSet}
           logWorkout={logWorkout}
           showSuccess={showSuccess}
+          showPR={showPR}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
