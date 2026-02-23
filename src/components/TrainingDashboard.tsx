@@ -222,6 +222,9 @@ export const AppContent = () => {
   const [week, setWeek] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showPR, setShowPR] = useState(false);
+  const [showAMRAPModal, setShowAMRAPModal] = useState(false);
+  const [amrapInput, setAmrapInput] = useState('');
+  const [amrapContext, setAmrapContext] = useState<{ weight: number, totalVolume: number } | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Load History and Lifts
@@ -399,20 +402,21 @@ export const AppContent = () => {
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
     
-    // Check for AMRAP rep entry
-    let actualReps = 0;
     const lastSetIdx = completedSets[completedSets.length - 1];
     const targetRepsStr = workoutSets[lastSetIdx].reps;
-    
-    if (targetRepsStr.includes('+')) {
-      const input = window.prompt(`AMRAP SET: How many reps did you get? (Target: ${targetRepsStr})`, targetRepsStr.replace('+', ''));
-      actualReps = parseInt(input || '0');
-    } else {
-      actualReps = parseInt(targetRepsStr);
-    }
-
     const weightUsed = workoutSets[lastSetIdx].weight;
     
+    if (targetRepsStr.includes('+')) {
+      setAmrapContext({ weight: weightUsed, totalVolume });
+      setAmrapInput(targetRepsStr.replace('+', ''));
+      setShowAMRAPModal(true);
+      return;
+    }
+
+    submitWorkout(parseInt(targetRepsStr), weightUsed, totalVolume);
+  };
+
+  const submitWorkout = async (actualReps: number, weightUsed: number, totalVolume: number) => {
     const newLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lift: selectedLift.name,
@@ -438,7 +442,6 @@ export const AppContent = () => {
             weight_used: weightUsed,
             reps_completed: actualReps
           });
-          console.warn('Sync failed, saved to Iron Vault.');
         } else {
           ironVault.sync();
         }
@@ -457,11 +460,15 @@ export const AppContent = () => {
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
     setCompletedSets([]);
     setShowSuccess(true);
+    setShowAMRAPModal(false);
 
+    // PR Celebration Logic
     const previousBest = history
       .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
       .reduce((max: number, h: any) => {
-        const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
+        const vol = parseFloat(String(h.volume).replace(/,/g, ''));
+        const sets = parseInt(h.sets) || 1;
+        const est = estimate1RM.epley(vol / sets, 5);
         return est > max ? est : max;
       }, 0);
 
@@ -479,7 +486,7 @@ export const AppContent = () => {
             colors: ['#2563eb', '#ffffff', '#60a5fa']
           });
         } catch (e) {
-          console.warn('Confetti failed to fire');
+          console.warn('Confetti failed');
         }
       }, 300);
     }
@@ -517,6 +524,50 @@ export const AppContent = () => {
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} />}
+
+      {/* High-Fidelity AMRAP Modal */}
+      {showAMRAPModal && (
+        <div className="fixed inset-0 z-[250] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl">
+            <div className="mb-8 text-center">
+              <div className="bg-blue-600 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-900/40">
+                <Dumbbell size={32} className="text-white" />
+              </div>
+              <h2 className="text-2xl font-black italic tracking-tight mb-2">AMRAP SET</h2>
+              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed px-4">
+                Enter your total completed reps for the top set
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="text-center">
+                <input 
+                  type="number" 
+                  value={amrapInput}
+                  onChange={(e) => setAmrapInput(e.target.value)}
+                  autoFocus
+                  className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-5xl font-black italic text-center text-blue-500 outline-none focus:border-blue-500 transition-all tabular-nums"
+                  placeholder="0"
+                />
+              </div>
+
+              <button 
+                onClick={() => amrapContext && submitWorkout(parseInt(amrapInput || '0'), amrapContext.weight, amrapContext.totalVolume)}
+                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black italic tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30"
+              >
+                SAVE PERFORMANCE
+              </button>
+              
+              <button 
+                onClick={() => setShowAMRAPModal(false)}
+                className="w-full py-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-zinc-400"
+              >
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
         <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>

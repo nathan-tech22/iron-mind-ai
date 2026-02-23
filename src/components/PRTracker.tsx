@@ -47,6 +47,58 @@ const IntensityHeatmap = ({ history }: { history: any[] }) => {
   );
 };
 
+const StructuralBalance = ({ history }: { history: any[] }) => {
+  const getBest = (name: string) => {
+    const logs = history.filter(h => h.lift?.toUpperCase() === name.toUpperCase());
+    return logs.length > 0 ? Math.max(...logs.map(l => l.est1RM)) : 0;
+  };
+
+  const squat = getBest('SQUAT');
+  const deadlift = getBest('DEADLIFT');
+  const bench = getBest('BENCH');
+  const press = getBest('PRESS');
+
+  const ratios = [
+    { label: 'PRESS : BENCH', val: bench > 0 ? (press / bench) * 100 : 0, target: 65 },
+    { label: 'BENCH : SQUAT', val: squat > 0 ? (bench / squat) * 100 : 0, target: 75 },
+    { label: 'SQUAT : DEAD', val: deadlift > 0 ? (squat / deadlift) * 100 : 0, target: 90 },
+  ];
+
+  if (squat === 0 && bench === 0) return null;
+
+  return (
+    <div className="mt-8 bg-zinc-900/30 border border-zinc-800/50 rounded-3xl p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-2">
+          <Target size={16} className="text-blue-500" />
+          <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Structural Balance</h3>
+        </div>
+        <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Ideal Ratios</span>
+      </div>
+      <div className="space-y-5">
+        {ratios.map(r => (
+          <div key={r.label} className="space-y-2">
+            <div className="flex justify-between items-end px-1">
+              <span className="text-[9px] font-black text-zinc-400 tracking-widest">{r.label}</span>
+              <span className={`text-[10px] font-black italic ${r.val >= r.target ? 'text-emerald-500' : 'text-amber-500'}`}>
+                {Math.round(r.val)}% / {r.target}%
+              </span>
+            </div>
+            <div className="h-1.5 w-full bg-black rounded-full overflow-hidden border border-zinc-800 relative">
+               {/* Target Marker */}
+               <div className="absolute top-0 bottom-0 w-0.5 bg-zinc-700 z-10" style={{ left: `${r.target}%` }} />
+               <div 
+                className={`h-full transition-all duration-1000 ${r.val >= r.target ? 'bg-emerald-500' : 'bg-blue-600'}`} 
+                style={{ width: `${Math.min(r.val, 100)}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ProgressChart = ({ history, liftName }: { history: any[], liftName: string }) => {
   const liftData = history
     .filter(h => h.lift?.toUpperCase() === liftName?.toUpperCase())
@@ -207,6 +259,7 @@ export const PRTracker = () => {
       </div>
 
       <IntensityHeatmap history={fullHistory} />
+      <StructuralBalance history={fullHistory} />
 
       <div className="space-y-4 mt-8">
         <h3 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] px-1">Hall of Fame</h3>
