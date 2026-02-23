@@ -64,8 +64,15 @@ const TrainingView = ({
     return 100;
   };
 
+  const isHighIntensity = currentPR > 0 && activeWeight / currentPR >= 0.85;
+
   return (
-    <div className="flex flex-col min-h-screen bg-black text-white pb-32 font-sans text-center md:text-left relative overflow-hidden">
+    <div className={`flex flex-col min-h-screen transition-colors duration-1000 pb-32 font-sans text-center md:text-left relative overflow-hidden ${
+      isHighIntensity ? 'bg-[#050505]' : 'bg-black'
+    }`}>
+      {isHighIntensity && (
+        <div className="absolute inset-0 bg-blue-900/5 animate-pulse pointer-events-none" />
+      )}
       {showSuccess && (
         <div className="fixed inset-0 z-[300] bg-blue-600 flex items-center justify-center animate-in fade-in zoom-in duration-300">
            <div className="text-center">
