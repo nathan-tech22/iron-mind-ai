@@ -145,7 +145,7 @@ const TrainingView = ({
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-xl font-black italic">{lift.tm}</div>
-                  <LiftFigure name={lift.name} />
+                  <LiftFigure name={lift.name} active={selectedLift.id === lift.id} />
                 </div>
               </button>
             );
