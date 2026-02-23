@@ -13,7 +13,8 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
     name: 'NATHAN KENNEDY',
     handle: '@NATHAN',
     theme: 'FOUNDER BLACK',
-    units: 'LBS (IMPERIAL)'
+    units: 'LBS (IMPERIAL)',
+    notifications: true
   });
 
   useEffect(() => {
@@ -25,10 +26,10 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
   const sections = [
     { icon: User, label: 'Profile Detail', value: profile.handle, action: () => setEditingProfile(true) },
     { icon: Weight, label: 'Edit Training Maxes', value: 'ACTIVE', action: () => setEditingTM(true) },
-    { icon: Palette, label: 'Visual Theme', value: profile.theme },
-    { icon: Globe, label: 'Unit System', value: profile.units },
-    { icon: Bell, label: 'Notifications', value: 'Enabled' },
-    { icon: Shield, label: 'Privacy & Data', value: '' },
+    { icon: Palette, label: 'Visual Theme', value: profile.theme, action: () => setEditingProfile(true) },
+    { icon: Globe, label: 'Unit System', value: profile.units, action: () => setEditingProfile(true) },
+    { icon: Bell, label: 'Notifications', value: profile.notifications ? 'ENABLED' : 'DISABLED', action: () => setProfile({...profile, notifications: !profile.notifications}) },
+    { icon: Shield, label: 'Privacy & Data', value: 'CLOUD SYNC' },
   ];
 
   const handleLogOut = async () => {
@@ -249,7 +250,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.4</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.5</p>
       </div>
     </div>
   );

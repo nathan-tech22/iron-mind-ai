@@ -93,22 +93,22 @@ export const HistoryScreen = ({ logs }: { logs: any[] }) => {
           <div className="flex-1 space-y-6 overflow-y-auto">
              <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-3xl p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <TrendingUp size={18} className="text-blue-500" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Advanced Analytics</span>
+                  <Activity size={18} className="text-blue-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">CNS Workload</span>
                 </div>
                 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-zinc-500 uppercase">Avg. Weight per Set</span>
-                    <span className="text-sm font-black italic">{Math.round(parseFloat(selectedLog.volume.replace(/,/g, '')) / selectedLog.sets)} lbs</span>
+                    <span className="text-xs font-bold text-zinc-500 uppercase">Intensity Rank</span>
+                    <span className={`text-sm font-black italic ${selectedLog.intensity > 300 ? 'text-red-500' : 'text-emerald-500'}`}>
+                      {selectedLog.intensity > 350 ? 'ELITE' : selectedLog.intensity > 250 ? 'HEAVY' : 'MODERATE'}
+                    </span>
                   </div>
-                  <div className="w-full bg-zinc-800 h-1 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full w-[65%]" />
-                  </div>
-                  
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-xs font-bold text-zinc-500 uppercase">Recovery Demand</span>
-                    <span className="text-xs font-black text-amber-500 uppercase italic">High</span>
+                  <div className="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="bg-blue-600 h-full transition-all duration-1000" 
+                      style={{ width: `${Math.min((selectedLog.intensity / 500) * 100, 100)}%` }}
+                    />
                   </div>
                 </div>
              </div>
