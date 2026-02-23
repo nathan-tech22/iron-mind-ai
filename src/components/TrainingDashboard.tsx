@@ -56,6 +56,16 @@ const TrainingView = ({
     ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
     : workoutSets[0].weight;
 
+  // Multi-cycle trend engine visualization
+  const getCycleTrend = (liftName: string) => {
+    const logs = history.filter(h => h.lift?.toUpperCase() === liftName.toUpperCase());
+    if (logs.length < 5) return null;
+    const current = estimate1RM.epley(parseFloat(String(logs[0].volume).replace(/,/g, '')) / (parseInt(String(logs[0].sets)) || 1), 5);
+    const prev = estimate1RM.epley(parseFloat(String(logs[4].volume).replace(/,/g, '')) / (parseInt(String(logs[4].sets)) || 1), 5);
+    const diff = current - prev;
+    return { pct: ((diff / prev) * 100).toFixed(1), up: diff >= 0 };
+  };
+
   const insights = analyzeProgress(history, lifts);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
@@ -141,9 +151,9 @@ const TrainingView = ({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3">
           {lifts.map((lift: any) => {
             const readiness = getReadiness(lift.name);
+            const trend = getCycleTrend(lift.name);
             return (
               <button
                 key={lift.id}
@@ -162,10 +172,17 @@ const TrainingView = ({
                   style={{ width: `${readiness}%`, opacity: selectedLift.id === lift.id ? 1 : 0.3 }}
                 />
                 
-                <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
-                  selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
-                }`}>
-                  {lift.name}
+                <div className="flex justify-between items-start mb-1">
+                  <div className={`text-[9px] font-black uppercase tracking-[0.2em] ${
+                    selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
+                  }`}>
+                    {lift.name}
+                  </div>
+                  {trend && (
+                    <div className={`text-[8px] font-black italic ${trend.up ? 'text-emerald-400' : 'text-amber-500'}`}>
+                      {trend.up ? '+' : ''}{trend.pct}%
+                    </div>
+                  )}
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="text-xl font-black italic">{lift.tm}</div>
@@ -174,7 +191,6 @@ const TrainingView = ({
               </button>
             );
           })}
-        </div>
 
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">

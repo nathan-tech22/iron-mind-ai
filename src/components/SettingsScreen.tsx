@@ -252,7 +252,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.6</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.6.7</p>
       </div>
     </div>
   );
