@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5/3/1 Pro Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Adding Chart.js -->
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-highlight: #334155;
+            --primary: #38bdf8; /* Sky Blue */
+            --accent: #f472b6;  /* Pink */
+            --success: #4ade80;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --font-main: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            margin: 0;
+            font-family: var(--font-main);
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 90px;
+        }
+
+        /* --- LAYOUT --- */
+        header {
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 { margin: 0; font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; 
+             background: linear-gradient(45deg, var(--primary), var(--accent));
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .container { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+        /* --- CARDS & UI --- */
+        .card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .row { display: flex; gap: 12px; align-items: center; }
+        .col { flex: 1; }
+
+        label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        select, input {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            appearance: none;
+        }
+        select { background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2394a3b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; background-size: 0.65em auto; }
+
+        button {
+            background: var(--primary);
+            color: #0f172a;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        button.secondary { background: var(--surface-highlight); color: var(--text); }
+        button.outline { background: transparent; border: 2px solid var(--border); color: var(--text-muted); }
+
+        /* --- WORKOUT TABLE --- */
+        .set-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .set-row:last-child { border-bottom: none; padding-bottom: 0; }
+        
+        .set-type { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .set-weight { font-size: 1.25rem; font-weight: 700; color: var(--text); }
+        .set-plates { font-size: 0.85rem; color: var(--text-muted); font-family: monospace; margin-top: 4px; }
+        .set-reps-badge { 
+            background: var(--surface-highlight); color: var(--text); 
+            padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.9rem;
+        }
+        
+        .checkbox {
+            width: 32px; height: 32px;
+            border: 2px solid var(--text-muted);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+            color: #0f172a;
+        }
+        .checkbox.checked::after { content: '✓'; font-weight: 900; }
+
+        /* AMRAP HIGHLIGHT */
+        .amrap-card { 
+            border: 2px solid var(--accent); 
+            background: linear-gradient(to right, rgba(244, 114, 182, 0.1), transparent);
+        }
+        .amrap-badge { background: var(--accent); color: white; }
+
+        /* --- TABS --- */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; background: var(--surface); padding: 4px; border-radius: 12px; }
+        .tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; font-weight: 600; }
+        .tab.active { background: var(--surface-highlight); color: var(--text); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+        /* --- NAV --- */
+        nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px;
+            background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(12px);
+            border: 1px solid var(--border); border-radius: 24px;
+            display: flex; justify-content: space-around;
+            padding: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 900;
+        }
+        .nav-item { opacity: 0.5; transition: opacity 0.2s; text-align: center; }
+        .nav-item.active { opacity: 1; color: var(--primary); }
+        .nav-icon { font-size: 1.5rem; }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
+        
+        /* Floating Timer */
+        #timer-float {
+            position: fixed; bottom: 100px; right: 20px;
+            background: #0f172a; border: 1px solid var(--primary);
+            padding: 10px 20px; border-radius: 30px;
+            display: flex; gap: 10px; align-items: center;
+            font-family: monospace; font-size: 1.2rem; font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 800; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>5/3/1 <span style="color:var(--text-muted); font-weight:400;">PRO</span></h1>
+    <div onclick="switchView('settings')" style="font-size:1.5rem; cursor:pointer;">⚙️</div>
+</header>
+
+<!-- === WORKOUT VIEW === -->
+<div id="view-workout" class="container">
+    
+    <!-- Controls -->
+    <div class="card" style="padding: 12px;">
+        <div class="row">
+            <div class="col">
+                <select id="lift-select" onchange="renderApp()">
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+            <div class="col">
+                <select id="week-select" onchange="renderApp()">
+                    <option value="0">Week 1 (5s)</option>
+                    <option value="1">Week 2 (3s)</option>
+                    <option value="2">Week 3 (1s)</option>
+                    <option value="3">Deload</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Lifts -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <label>Main Work</label>
+            <label id="tm-display">TM: 225 lbs</label>
+        </div>
+        <div id="workout-list"></div>
+    </div>
+
+    <!-- Supplemental (BBB / FSL) -->
+    <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <label>Supplemental</label>
+            <select id="template-select" style="width:auto; padding:6px 12px; font-size:0.8rem;" onchange="updateTemplate()">
+                <option value="none">None</option>
+                <option value="bbb">BBB (5x10 @ 50%)</option>
+                <option value="fsl">FSL (5x5)</option>
+            </select>
+        </div>
+        <div id="supplemental-list"></div>
+    </div>
+
+    <!-- Assistance -->
+    <div class="card">
+        <label>Assistance (Optional)</label>
+        <div style="color:var(--text-muted); font-size:0.9rem; line-height:1.5;">
+            • Push: 50-100 reps<br>
+            • Pull: 50-100 reps<br>
+            • Single Leg/Core: 50-100 reps
+        </div>
+    </div>
+
+    <div style="height:100px;"></div> <!-- Spacer -->
+</div>
+
+<!-- === PROGRESS VIEW === -->
+<div id="view-progress" class="container hidden">
+    <h2>Estimated 1RM History</h2>
+    <select id="stats-lift-select" onchange="renderChart()">
+        <!-- Populated by JS -->
+    </select>
+    <div class="card">
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+    
+    <h3>Recent PRs</h3>
+    <div id="pr-history-list"></div>
+</div>
+
+<!-- === SETTINGS VIEW === -->
+<div id="view-settings" class="container hidden">
+    <h2>Lifts & TMs</h2>
+    <div id="lifts-manager"></div>
+    
+    <div class="card">
+        <label>Add New Lift</label>
+        <div class="row">
+            <input type="text" id="new-lift-name" placeholder="Name (e.g. Front Squat)">
+            <input type="number" id="new-lift-tm" placeholder="TM (lbs)">
+        </div>
+        <button onclick="addNewLift()" style="margin-top:10px;">Add Lift</button>
+    </div>
+
+    <div class="card">
+        <label>Cycle Management</label>
+        <p style="color:var(--text-muted); font-size:0.9rem;">
+            Finished 3 weeks? Increase TMs automatically.
+        </p>
+        <button onclick="finishCycle()">Finish Cycle (+5/10 lbs)</button>
+    </div>
+
+    <button class="outline" onclick="exportData()">Export Data (Backup)</button>
+    <br><br>
+    <button class="outline" style="color:var(--accent); border-color:var(--accent);" onclick="resetApp()">Reset Everything</button>
+</div>
+
+<!-- === FLOATING ELEMENTS === -->
+<div id="timer-float" class="hidden" onclick="toggleTimerState()">
+    <span id="timer-text">00:00</span>
+    <span style="font-size:1rem">⏯</span>
+</div>
+
+<nav>
+    <div class="nav-item active" onclick="switchView('workout')">
+        <span class="nav-icon">🏋️</span>
+    </div>
+    <div class="nav-item" onclick="switchView('progress')">
+        <span class="nav-icon">📈</span>
+    </div>
+</nav>
+
+<script>
+    // --- STATE & DATA ---
+    const defaultData = {
+        lifts: [
+            { id: 'sq', name: 'Squat', tm: 225, increment: 10 },
+            { id: 'bp', name: 'Bench', tm: 185, increment: 5 },
+            { id: 'dl', name: 'Deadlift', tm: 315, increment: 10 },
+            { id: 'ohp', name: 'OHP', tm: 135, increment: 5 }
+        ],
+        logs: [], // { date, liftId, weight, reps, est1rm }
+        settings: { template: 'bbb' }
+    };
+
+    let app = JSON.parse(localStorage.getItem('531_pro_v1')) || defaultData;
+    let chartInstance = null;
+
+    // --- 5/3/1 MATH ---
+    const WEEKS = [
+        { name: "Week 1 (5s)", sets: [0.65, 0.75, 0.85], reps: [5, 5, "5+"] },
+        { name: "Week 2 (3s)", sets: [0.70, 0.80, 0.90], reps: [3, 3, "3+"] },
+        { name: "Week 3 (1s)", sets: [0.75, 0.85, 0.95], reps: [5, 3, "1+"] },
+        { name: "Deload", sets: [0.40, 0.50, 0.60], reps: [5, 5, 5] }
+    ];
+
+    // --- INIT ---
+    function init() {
+        populateSelectors();
+        document.getElementById('template-select').value = app.settings.template || 'none';
+        renderApp();
+    }
+
+    function save() {
+        localStorage.setItem('531_pro_v1', JSON.stringify(app));
+    }
+
+    function switchView(view) {
+        document.querySelectorAll('.container').forEach(el => el.classList.add('hidden'));
+        document.getElementById('view-' + view).classList.remove('hidden');
+        
+        // Nav state
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(view === 'workout') document.querySelectorAll('.nav-item')[0].classList.add('active');
+        if(view === 'progress') {
+            document.querySelectorAll('.nav-item')[1].classList.add('active');
+            renderChart();
+        }
+    }
+
+    function populateSelectors() {
+        const sels = [document.getElementById('lift-select'), document.getElementById('stats-lift-select')];
+        sels.forEach(sel => {
+            if(!sel) return;
+            sel.innerHTML = '';
+            app.lifts.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.text = l.name;
+                sel.add(opt);
+            });
+        });
+        renderSettingsLifts();
+    }
+
+    function renderApp() {
+        const liftId = document.getElementById('lift-select').value;
+        const weekIdx = parseInt(document.getElementById('week-select').value);
+        const lift = app.lifts.find(l => l.id === liftId);
+        
+        if (!lift) return;
+
+        document.getElementById('tm-display').textContent = `TM: ${lift.tm} lbs`;
+
+        // Render Main Work
+        const container = document.getElementById('workout-list');
+        container.innerHTML = '';
+
+        // Warmups
+        [0.4, 0.5, 0.6].forEach(pct => {
+            container.appendChild(createSetEl(lift.tm * pct, 5, 'Warmup', false));
+        });
+
+        // Main Sets
+        const week = WEEKS[weekIdx];
+        week.sets.forEach((pct, i) => {
+            const isAmrap = typeof week.reps[i] === 'string' && week.reps[i].includes('+');
+            const el = createSetEl(lift.tm * pct, week.reps[i], `Set ${i+1}`, isAmrap);
+            container.appendChild(el);
+        });
+
+        // Render Supplemental
+        renderSupplemental(lift, weekIdx);
+    }
+
+    function renderSupplemental(lift, weekIdx) {
+        const container = document.getElementById('supplemental-list');
+        container.innerHTML = '';
+        const mode = app.settings.template;
+
+        if (mode === 'none' || weekIdx === 3) { // No supplemental on deload
+            container.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:10px;">No supplemental work scheduled.</div>';
+            return;
+        }
+
+        if (mode === 'bbb') {
+            // Boring But Big: 5x10 @ 50%
+            for(let i=0; i<5; i++) {
+                container.appendChild(createSetEl(lift.tm * 0.5, 10, 'BBB Set ' + (i+1), false));
+            }
+        } else if (mode === 'fsl') {
+            // First Set Last: 5x5 @ First Set %
+            const pct = WEEKS[weekIdx].sets[0];
+            for(let i=0; i<5; i++) {
+                container.appendChild(createSetEl(lift.tm * pct, 5, 'FSL Set ' + (i+1), false));
+            }
+        }
+    }
+
+    function createSetEl(weightRaw, reps, label, isAmrap) {
+        const weight = Math.round(weightRaw / 5) * 5;
+        const plates = getPlateMath(weight);
+        
+        const div = document.createElement('div');
+        div.className = 'set-row';
+        if (isAmrap) {
+            div.style.background = 'rgba(244, 114, 182, 0.05)';
+            div.style.padding = '16px';
+            div.style.borderRadius = '12px';
+            div.style.border = '1px solid var(--accent)';
+            div.style.marginBottom = '10px';
+        }
+
+        let repsBadge = isAmrap ? `<span class="amrap-badge set-reps-badge">PR SET: ${reps}</span>` 
+                                : `<span class="set-reps-badge">${reps}</span>`;
+
+        // AMRAP Input Logic
+        let actionHtml = `<div class="checkbox" onclick="toggleSet(this)"></div>`;
+        if (isAmrap) {
+            actionHtml = `
+                <div style="text-align:right;">
+                    <input type="number" placeholder="Reps" style="width:70px; padding:8px; margin-bottom:5px;" id="amrap-input">
+                    <button style="padding:6px 12px; font-size:0.8rem;" onclick="logPR(${weight})">Log</button>
+                </div>
+            `;
+        }
+
+        div.innerHTML = `
+            <div style="flex:1">
+                <div class="set-type" style="${isAmrap ? 'color:var(--accent)' : ''}">${label}</div>
+                <div class="set-weight">${weight} <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">lbs</span></div>
+                <div class="set-plates">${plates}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                ${!isAmrap ? repsBadge : ''}
+                ${actionHtml}
+            </div>
+        `;
+        return div;
+    }
+
+    function getPlateMath(weight) {
+        let w = (weight - 45) / 2;
+        if (w <= 0) return "Bar";
+        const plates = [];
+        [45, 35, 25, 10, 5, 2.5].forEach(p => {
+            while (w >= p) { plates.push(p); w -= p; }
+        });
+        return plates.length ? plates.join(', ') : "Bar";
+    }
+
+    function toggleSet(el) {
+        el.classList.toggle('checked');
+        if (el.classList.contains('checked')) startTimer();
+    }
+
+    function updateTemplate() {
+        app.settings.template = document.getElementById('template-select').value;
+        save();
+        renderApp();
+    }
+
+    // --- LOGGING & PROGRESS ---
+    function logPR(weight) {
+        const reps = parseInt(document.getElementById('amrap-input').value);
+        if(!reps) return;
+        
+        const est1rm = Math.round(weight * (1 + reps/30));
+        const liftId = document.getElementById('lift-select').value;
+        
+        app.logs.push({
+            date: new Date().toISOString(),
+            liftId,
+            weight,
+            reps,
+            est1rm
+        });
+        save();
+        alert(`Logged! Estimated 1RM: ${est1rm} lbs`);
+        
+        // Show fireworks or something? For now just switch to chart
+        // switchView('progress'); 
+    }
+
+    function renderChart() {
+        const liftId = document.getElementById('stats-lift-select').value;
+        const logs = app.logs
+            .filter(l => l.liftId === liftId)
+            .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        
+        if (chartInstance) chartInstance.destroy();
+
+        if (logs.length === 0) return;
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: logs.map(l => new Date(l.date).toLocaleDateString()),
+                datasets: [{
+                    label: 'Est. 1RM',
+                    data: logs.map(l => l.est1rm),
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Render History List
+        const list = document.getElementById('pr-history-list');
+        list.innerHTML = '';
+        [...logs].reverse().forEach(log => {
+            const d = new Date(log.date);
+            list.innerHTML += `
+                <div class="card" style="padding:12px; display:flex; justify-content:space-between;">
+                    <div>
+                        <div style="font-size:0.8rem; color:var(--text-muted);">${d.toLocaleDateString()}</div>
+                        <div style="font-weight:bold;">${log.weight} x ${log.reps}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="color:var(--primary); font-weight:bold; font-size:1.2rem;">${log.est1rm}</div>
+                        <div style="font-size:0.7rem; color:var(--text-muted);">EST 1RM</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // --- SETTINGS MGR ---
+    function renderSettingsLifts() {
+        const container = document.getElementById('lifts-manager');
+        container.innerHTML = '';
+        app.lifts.forEach((l, idx) => {
+            container.innerHTML += `
+                <div class="card" style="display:flex; gap:10px; align-items:center;">
+                    <div style="flex:1; font-weight:bold;">${l.name}</div>
+                    <input type="number" value="${l.tm}" style="width:80px; padding:8px;" onchange="updateLiftTM(${idx}, this.value)">
+                    <button class="outline" style="width:auto; padding:8px; border-color:var(--error); color:var(--error);" onclick="deleteLift(${idx})">×</button>
+                </div>
+            `;
+        });
+    }
+
+    function updateLiftTM(idx, val) {
+        app.lifts[idx].tm = parseFloat(val);
+        save();
+        renderApp();
+    }
+
+    function addNewLift() {
+        const name = document.getElementById('new-lift-name').value;
+        const tm = parseFloat(document.getElementById('new-lift-tm').value);
+        if(name && tm) {
+            app.lifts.push({ id: Date.now().toString(), name, tm, increment: 5 });
+            save();
+            init();
+        }
+    }
+
+    function finishCycle() {
+        if(confirm("Increase Training Maxes?\n\n• Squat/Deadlift +10lbs\n• Bench/OHP +5lbs")) {
+            app.lifts.forEach(l => {
+                // Heuristic: if TM > 200 likely lower body (not perfect but simple)
+                // Better: Check names
+                const lower = ['squat', 'deadlift', 'sq', 'dl'];
+                const isLower = lower.some(s => l.name.toLowerCase().includes(s));
+                l.tm += isLower ? 10 : 5;
+            });
+            save();
+            renderSettingsLifts();
+            renderApp();
+            alert("Cycle updated! Good luck next month.");
+        }
+    }
+
+    function resetApp() {
+        if(confirm("NUKE ALL DATA?")) {
+            localStorage.removeItem('531_pro_v1');
+            location.reload();
+        }
+    }
+
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(app));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "531_backup.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    // --- TIMER ---
+    let timerInt = null;
+    let timerSecs = 0;
+    
+    function startTimer() {
+        document.getElementById('timer-float').classList.remove('hidden');
+        timerSecs = 0;
+        clearInterval(timerInt);
+        timerInt = setInterval(() => {
+            timerSecs++;
+            const m = Math.floor(timerSecs / 60).toString().padStart(2, '0');
+            const s = (timerSecs % 60).toString().padStart(2, '0');
+            document.getElementById('timer-text').textContent = `${m}:${s}`;
+        }, 1000);
+    }
+    
+    function toggleTimerState() {
+        const el = document.getElementById('timer-float');
+        el.classList.add('hidden');
+        clearInterval(timerInt);
+    }
+
+    // Boot
+    init();
+
+</script>
+</body>
+</html>

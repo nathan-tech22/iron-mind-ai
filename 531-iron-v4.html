@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Iron 5/3/1 Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- CORE --- */
+        :root {
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --surface-2: #2c2c2e;
+            --primary: #0a84ff;
+            --accent: #ff375f;
+            --success: #32d74b;
+            --warning: #ffd60a;
+            --text: #ffffff;
+            --text-sec: #8e8e93;
+            --border: #38383a;
+            --plate-45: #0a84ff;
+            --plate-35: #bf5af2;
+            --plate-25: #32d74b;
+            --plate-10: #ffffff;
+            --plate-5: #ff453a;
+            --plate-2_5: #64d2ff;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* --- LAYOUT --- */
+        #app { flex: 1; overflow-y: auto; padding: 20px 16px 100px 16px; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
+        h1 { font-size: 28px; margin: 0 0 4px 0; letter-spacing: -0.5px; }
+        h2 { font-size: 15px; color: var(--text-sec); margin: 0 0 24px 0; font-weight: 500; }
+        .section-header { font-size: 13px; font-weight: 600; color: var(--text-sec); text-transform: uppercase; margin: 24px 0 8px 12px; letter-spacing: 0.5px; }
+
+        /* --- CARDS --- */
+        .card { background: var(--surface); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); }
+        .row:last-child { border-bottom: none; }
+        
+        /* --- INPUTS --- */
+        select, input { background: transparent; border: none; color: var(--primary); font-size: 17px; text-align: right; outline: none; font-weight: 500; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; background: var(--surface-2); color: var(--primary); font-weight: 600; font-size: 17px; border: none; cursor: pointer; margin-bottom: 12px; }
+        .btn:active { opacity: 0.7; transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+
+        /* --- VISUAL BARBELL --- */
+        .barbell-container { padding: 20px 0; display: flex; align-items: center; justify-content: center; height: 60px; }
+        .bar { width: 100%; height: 8px; background: #555; border-radius: 4px; position: relative; display: flex; justify-content: center; align-items: center; }
+        .bar-sleeve { width: 40%; height: 12px; background: #777; position: absolute; }
+        .bar-sleeve.left { left: 0; border-top-left-radius: 4px; border-bottom-left-radius: 4px; display: flex; justify-content: flex-end; align-items: center; padding-right: 4px; gap: 2px; }
+        .bar-sleeve.right { right: 0; border-top-right-radius: 4px; border-bottom-right-radius: 4px; display: flex; justify-content: flex-start; align-items: center; padding-left: 4px; gap: 2px; }
+        
+        .plate { height: 40px; width: 8px; border-radius: 2px; }
+        .p-45 { height: 50px; background: var(--plate-45); width: 12px; }
+        .p-35 { height: 46px; background: var(--plate-35); width: 10px; }
+        .p-25 { height: 42px; background: var(--plate-25); width: 9px; }
+        .p-10 { height: 34px; background: var(--plate-10); width: 7px; }
+        .p-5  { height: 28px; background: var(--plate-5); width: 6px; }
+        .p-2_5 { height: 24px; background: var(--plate-2_5); width: 5px; }
+
+        /* --- SETS --- */
+        .set-row { display: flex; padding: 12px 16px; border-bottom: 1px solid var(--border); transition: 0.2s; align-items: center; }
+        .set-row.done { background: rgba(50, 215, 75, 0.1); opacity: 0.6; }
+        .checkbox { width: 28px; height: 28px; border: 2px solid var(--text-sec); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin-left: auto; }
+        .set-row.done .checkbox { background: var(--success); border-color: var(--success); color: black; }
+        .set-row.done .checkbox:after { content: "✓"; font-weight: 900; }
+        .amrap-row { border-left: 4px solid var(--primary); background: rgba(10, 132, 255, 0.05); }
+        .amrap-badge { font-size: 10px; color: var(--primary); font-weight: 800; letter-spacing: 0.5px; }
+
+        /* --- ACCESSORIES --- */
+        .accessory-card { padding: 16px; }
+        .accessory-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        
+        /* --- NAV --- */
+        nav { position: fixed; bottom: 0; width: 100%; background: rgba(28,28,30,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; color: var(--text-sec); font-size: 10px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+
+        /* --- FLOATING TIMER --- */
+        #timer-float { position: fixed; bottom: 90px; right: 16px; background: var(--surface); border: 1px solid var(--border); padding: 12px 20px; border-radius: 30px; font-weight: 700; font-size: 20px; font-variant-numeric: tabular-nums; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; gap: 8px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- PAGE: TRAIN -->
+    <div id="page-train">
+        <h1>Iron 5/3/1 <span style="font-size:14px; color:var(--primary); vertical-align:middle; border:1px solid var(--primary); border-radius:4px; padding:2px 4px;">PRO</span></h1>
+        <h2>v4.0 - The Architect Edition</h2>
+
+        <!-- HEADER -->
+        <div class="card">
+            <div class="row">
+                <span>Lift</span>
+                <select id="lift-sel" onchange="render()"></select>
+            </div>
+            <div class="row">
+                <span>Cycle Week</span>
+                <select id="week-sel" onchange="render()">
+                    <option value="0">Week 1 (5/5/5+)</option>
+                    <option value="1">Week 2 (3/3/3+)</option>
+                    <option value="2">Week 3 (5/3/1+)</option>
+                    <option value="3">Week 4 (Deload)</option>
+                    <option value="4">TM Test Week (7th Week)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- VISUAL BARBELL -->
+        <div class="card" style="background:linear-gradient(180deg, var(--surface) 0%, #151515 100%);">
+            <div class="barbell-container">
+                <div class="bar">
+                    <div class="bar-sleeve left" id="bar-left"></div>
+                    <div class="bar-sleeve right" id="bar-right"></div>
+                </div>
+            </div>
+            <div style="text-align:center; padding-bottom:12px; font-weight:700; font-size:20px; color:var(--text-sec);">
+                <span id="preview-weight">45</span> <span style="font-size:12px;">lbs</span>
+            </div>
+        </div>
+
+        <!-- MAIN WORK -->
+        <div class="section-header">Main Work (TM: <span id="tm-disp"></span>)</div>
+        <div class="card" id="main-work"></div>
+
+        <!-- SUPPLEMENTAL -->
+        <div class="section-header">Supplemental</div>
+        <div class="card">
+            <div class="row" style="padding:10px 16px; background:var(--surface-2);">
+                <span style="font-size:12px; font-weight:600;">TEMPLATE</span>
+                <select id="supp-sel" style="font-size:12px;" onchange="updateTemplate()">
+                    <option value="bbb">BBB (5x10 @ 50%)</option>
+                    <option value="fsl">FSL (5x5)</option>
+                    <option value="ssl">SSL (5x5)</option>
+                    <option value="widow">Widowmaker (1x20)</option>
+                    <option value="none">None</option>
+                </select>
+            </div>
+            <div id="supp-work"></div>
+        </div>
+
+        <!-- ASSISTANCE -->
+        <div class="section-header">Assistance (50-100 Reps)</div>
+        <div class="card accessory-card">
+            <div class="accessory-row">
+                <span>Push (Dips, Pushups)</span>
+                <input type="checkbox" class="acc-check">
+            </div>
+            <div class="accessory-row">
+                <span>Pull (Chins, Rows)</span>
+                <input type="checkbox" class="acc-check">
+            </div>
+            <div class="accessory-row">
+                <span>Single Leg/Core</span>
+                <input type="checkbox" class="acc-check">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="finishWorkout()">Finish Workout</button>
+    </div>
+
+    <!-- PAGE: PROGRESS -->
+    <div id="page-progress" class="hidden">
+        <h1>Progress</h1>
+        <div class="card" style="height:250px; padding:10px;">
+            <canvas id="chart"></canvas>
+        </div>
+        <div class="section-header">Body Weight</div>
+        <div class="card">
+            <div class="row">
+                <input type="number" id="bw-input" placeholder="lbs">
+                <button class="btn btn-primary" style="width:auto; margin:0; padding:8px 20px;" onclick="logBW()">Log</button>
+            </div>
+        </div>
+        <div id="history-list"></div>
+    </div>
+
+    <!-- PAGE: SETTINGS -->
+    <div id="page-settings" class="hidden">
+        <h1>Settings</h1>
+        <div class="section-header">Lifts (True 1RM)</div>
+        <div id="lifts-config"></div>
+        <button class="btn" onclick="addLift()">+ Add Lift</button>
+        
+        <div class="section-header">Data</div>
+        <button class="btn" onclick="exportCSV()">Export CSV</button>
+        <button class="btn" style="color:#ff453a" onclick="resetAll()">Reset All Data</button>
+    </div>
+</div>
+
+<div id="timer-float" onclick="toggleTimer()">
+    <span id="timer-val">00:00</span>
+    <span style="font-size:12px; opacity:0.7">REST</span>
+</div>
+
+<nav>
+    <div class="nav-item active" onclick="nav('train')"><span class="nav-icon">🏋️</span>Train</div>
+    <div class="nav-item" onclick="nav('progress')"><span class="nav-icon">📈</span>Progress</div>
+    <div class="nav-item" onclick="nav('settings')"><span class="nav-icon">⚙️</span>Settings</div>
+</nav>
+
+<script>
+    // --- STATE ---
+    const DEFAULTS = {
+        lifts: [
+            { id: 'sq', name: 'Squat', trueMax: 225, tm: 200 },
+            { id: 'bp', name: 'Bench', trueMax: 185, tm: 165 },
+            { id: 'dl', name: 'Deadlift', trueMax: 315, tm: 285 },
+            { id: 'ohp', name: 'OHP', trueMax: 135, tm: 120 }
+        ],
+        template: 'bbb',
+        history: [],
+        bw: []
+    };
+    let state = JSON.parse(localStorage.getItem('iron531_v4')) || DEFAULTS;
+    let timerInt = null;
+    let timerSecs = 0;
+    let chartInst = null;
+
+    // --- LOGIC ---
+    const WEEKS = [
+        { name: "5s", sets: [0.65, 0.75, 0.85], reps: [5, 5, "5+"] },
+        { name: "3s", sets: [0.70, 0.80, 0.90], reps: [3, 3, "3+"] },
+        { name: "1s", sets: [0.75, 0.85, 0.95], reps: [5, 3, "1+"] },
+        { name: "Deload", sets: [0.40, 0.50, 0.60], reps: [5, 5, 5] },
+        { name: "TM Test", sets: [0.70, 0.80, 0.90, 1.00], reps: [5, 5, 5, "3-5"] } // 7th Week Protocol
+    ];
+
+    function init() {
+        // Init Lifts
+        const sel = document.getElementById('lift-sel');
+        sel.innerHTML = '';
+        state.lifts.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l.id; opt.text = l.name;
+            sel.add(opt);
+        });
+        document.getElementById('supp-sel').value = state.template;
+        render();
+    }
+
+    function render() {
+        const liftId = document.getElementById('lift-sel').value;
+        const weekIdx = parseInt(document.getElementById('week-sel').value);
+        const lift = state.lifts.find(l => l.id === liftId);
+        if(!lift) return;
+
+        document.getElementById('tm-disp').innerText = lift.tm + " lbs";
+        const mainDiv = document.getElementById('main-work');
+        mainDiv.innerHTML = '';
+
+        // Warmups
+        [0.4, 0.5, 0.6].forEach(p => mainDiv.appendChild(createRow(lift.tm * p, 5, 'Warmup')));
+
+        // Main Sets
+        const week = WEEKS[weekIdx];
+        week.sets.forEach((pct, i) => {
+            const isAmrap = typeof week.reps[i] === 'string';
+            mainDiv.appendChild(createRow(lift.tm * pct, week.reps[i], `Set ${i+1}`, isAmrap, lift.id));
+        });
+
+        // Supplemental
+        renderSupp(lift, weekIdx);
+
+        // Default visual to first set
+        drawBarbell(Math.round((lift.tm * 0.4)/5)*5);
+    }
+
+    function renderSupp(lift, weekIdx) {
+        const div = document.getElementById('supp-work');
+        div.innerHTML = '';
+        const mode = state.template;
+        if(mode === 'none' || weekIdx >= 3) return; // No supp on deload/test
+
+        let sets=0, reps=0, pct=0;
+        if(mode === 'bbb') { sets=5; reps=10; pct=0.5; }
+        if(mode === 'fsl') { sets=5; reps=5; pct=WEEKS[weekIdx].sets[0]; }
+        if(mode === 'ssl') { sets=5; reps=5; pct=WEEKS[weekIdx].sets[1]; }
+        if(mode === 'widow') { sets=1; reps=20; pct=WEEKS[weekIdx].sets[0]; }
+
+        for(let i=0; i<sets; i++) {
+            div.appendChild(createRow(lift.tm * pct, reps, `${mode.toUpperCase()} Set ${i+1}`));
+        }
+    }
+
+    function createRow(weightRaw, reps, label, isAmrap=false, liftId=null) {
+        const weight = Math.round(weightRaw/5)*5;
+        const div = document.createElement('div');
+        div.className = isAmrap ? 'set-row amrap-row' : 'set-row';
+        div.onclick = (e) => {
+            if(e.target.tagName === 'INPUT') return;
+            div.classList.toggle('done');
+            if(div.classList.contains('done')) startTimer();
+            drawBarbell(weight); // Update visual on click
+            document.getElementById('preview-weight').innerText = weight;
+        };
+
+        let badge = isAmrap ? `<div class="amrap-badge">PR SET / ${reps}</div>` : '';
+        let right = `<div class="checkbox"></div>`;
+        
+        if(isAmrap) {
+            right = `
+                <div style="text-align:right">
+                    <input type="number" placeholder="Reps" style="width:40px; text-align:center; background:rgba(255,255,255,0.1); padding:4px; border-radius:4px;" id="amrap-in">
+                    <div style="font-size:9px; color:var(--primary)">LOG</div>
+                </div>
+                <div class="checkbox" onclick="logPR('${liftId}', ${weight})"></div>
+            `;
+        }
+
+        div.innerHTML = `
+            <div style="flex:1">
+                ${badge}
+                <div style="font-weight:600">${label}</div>
+            </div>
+            <div style="font-weight:700; font-size:18px; margin-right:16px;">${weight}<span style="font-size:12px; color:var(--text-sec); font-weight:400">lbs</span></div>
+            ${right}
+        `;
+        return div;
+    }
+
+    // --- VISUAL BARBELL ---
+    function drawBarbell(weight) {
+        const left = document.getElementById('bar-left');
+        const right = document.getElementById('bar-right');
+        left.innerHTML = ''; right.innerHTML = '';
+        
+        let w = (weight - 45) / 2;
+        if(w <= 0) return;
+
+        const plates = [45, 35, 25, 10, 5, 2.5];
+        const colors = ['p-45', 'p-35', 'p-25', 'p-10', 'p-5', 'p-2_5'];
+        
+        plates.forEach((p, i) => {
+            while(w >= p) {
+                left.innerHTML += `<div class="plate ${colors[i]}"></div>`;
+                right.prepend(Object.assign(document.createElement('div'), {className: `plate ${colors[i]}`}));
+                w -= p;
+            }
+        });
+    }
+
+    // --- DATA OPS ---
+    function logPR(liftId, weight) {
+        const reps = parseInt(document.getElementById('amrap-in').value);
+        if(!reps) return;
+        const est1rm = Math.round(weight * (1 + reps/30));
+        state.history.push({ date: new Date().toISOString(), liftId, weight, reps, est1rm });
+        localStorage.setItem('iron531_v4', JSON.stringify(state));
+        alert(`Logged! Est 1RM: ${est1rm} lbs`);
+        event.stopPropagation();
+    }
+
+    function logBW() {
+        const w = parseFloat(document.getElementById('bw-input').value);
+        if(w) {
+            state.bw.push({ date: new Date().toISOString(), weight: w });
+            localStorage.setItem('iron531_v4', JSON.stringify(state));
+            updateChart();
+        }
+    }
+
+    function updateTemplate() {
+        state.template = document.getElementById('supp-sel').value;
+        localStorage.setItem('iron531_v4', JSON.stringify(state));
+        render();
+    }
+
+    function finishWorkout() {
+        if(confirm("Workout Complete?")) location.reload();
+    }
+
+    // --- SETTINGS ---
+    function renderSettings() {
+        const d = document.getElementById('lifts-config');
+        d.innerHTML = '';
+        state.lifts.forEach((l, i) => {
+            d.innerHTML += `
+                <div class="card row">
+                    <input value="${l.name}" onchange="updLift(${i}, 'name', this.value)" style="text-align:left; font-weight:700;">
+                    <div style="text-align:right">
+                        <span style="font-size:10px; color:var(--text-sec)">TRUE MAX</span><br>
+                        <input type="number" value="${l.trueMax}" onchange="updLift(${i}, 'trueMax', this.value)" style="width:60px;">
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function updLift(i, field, val) {
+        if(field === 'trueMax') {
+            state.lifts[i].trueMax = parseFloat(val);
+            state.lifts[i].tm = Math.round((parseFloat(val) * 0.9)/5)*5;
+        } else {
+            state.lifts[i][field] = val;
+        }
+        localStorage.setItem('iron531_v4', JSON.stringify(state));
+        init();
+    }
+
+    function exportCSV() {
+        let csv = "Date,Lift,Weight,Reps,Est1RM\n";
+        state.history.forEach(h => {
+            const l = state.lifts.find(x => x.id === h.liftId)?.name || h.liftId;
+            csv += `${h.date},${l},${h.weight},${h.reps},${h.est1rm}\n`;
+        });
+        const blob = new Blob([csv], {type: 'text/csv'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'iron531_export.csv';
+        a.click();
+    }
+    
+    function resetAll() {
+        if(confirm("NUKE ALL DATA?")) {
+            localStorage.removeItem('iron531_v4');
+            location.reload();
+        }
+    }
+
+    // --- CHART ---
+    function updateChart() {
+        if(chartInst) chartInst.destroy();
+        const ctx = document.getElementById('chart').getContext('2d');
+        const data = state.history.filter(h => h.liftId === state.lifts[0].id).map(h => ({x: h.date, y: h.est1rm}));
+        
+        chartInst = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [{ label: 'Est 1RM', data: data, borderColor: '#0a84ff', tension: 0.4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { grid: { color: '#333' } } } }
+        });
+    }
+
+    // --- NAV ---
+    function nav(p) {
+        document.querySelectorAll('div[id^="page-"]').forEach(e => e.classList.add('hidden'));
+        document.getElementById('page-'+p).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        if(p==='progress') updateChart();
+        if(p==='settings') renderSettings();
+    }
+
+    // --- TIMER ---
+    function startTimer() {
+        document.getElementById('timer-float').style.display = 'flex';
+        timerSecs = 0;
+        clearInterval(timerInt);
+        timerInt = setInterval(() => {
+            timerSecs++;
+            let m = Math.floor(timerSecs/60).toString().padStart(2,'0');
+            let s = (timerSecs%60).toString().padStart(2,'0');
+            document.getElementById('timer-val').innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function toggleTimer() {
+        const el = document.getElementById('timer-float');
+        if(el.style.display !== 'none') {
+            el.style.display = 'none'; clearInterval(timerInt);
+        } else { startTimer(); }
+    }
+
+    init();
+</script>
+</body>
+</html>

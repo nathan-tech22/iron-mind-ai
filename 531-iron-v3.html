@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Iron 5/3/1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- RESET & VARIABLES --- */
+        :root {
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --surface-2: #2c2c2e;
+            --primary: #0a84ff; /* iOS Blue */
+            --accent: #ff375f;  /* iOS Pink */
+            --success: #30d158; /* iOS Green */
+            --warning: #ffd60a;
+            --text: #ffffff;
+            --text-sec: #8e8e93;
+            --border: #38383a;
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* --- LAYOUT --- */
+        #app-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px 100px 16px; /* Space for navbar */
+            -webkit-overflow-scrolling: touch;
+        }
+
+        h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.5px; }
+        h1 { font-size: 28px; margin-bottom: 5px; }
+        h2 { font-size: 20px; color: var(--text-sec); margin-bottom: 20px; }
+        
+        .section-title {
+            text-transform: uppercase;
+            font-size: 13px;
+            color: var(--text-sec);
+            margin: 24px 0 8px 12px;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- COMPONENTS --- */
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            text-decoration: none;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .list-item:active { background: var(--surface-2); }
+
+        .btn {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; padding: 16px;
+            border-radius: 12px; border: none;
+            font-size: 17px; font-weight: 600;
+            background: var(--surface-2); color: var(--primary);
+            cursor: pointer; margin-bottom: 12px;
+        }
+        .btn:active { opacity: 0.7; transform: scale(0.98); }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
+
+        input, select {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            font-size: 17px;
+            text-align: right;
+            outline: none;
+            font-family: inherit;
+        }
+        select { appearance: none; padding-right: 0; }
+        input::placeholder { color: var(--text-sec); }
+
+        /* --- WORKOUT VIEW --- */
+        .set-row {
+            display: flex; align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+        .set-row.done { opacity: 0.5; background: rgba(48, 209, 88, 0.1); }
+        .set-row:last-child { border-bottom: none; }
+
+        .plate-stack { font-size: 12px; color: var(--text-sec); font-family: "SF Mono", monospace; margin-top: 4px; }
+        
+        .checkbox {
+            width: 28px; height: 28px;
+            border: 2px solid var(--text-sec); border-radius: 50%;
+            margin-left: 16px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .set-row.done .checkbox {
+            background: var(--success); border-color: var(--success); color: black;
+        }
+        .set-row.done .checkbox::after { content: "✓"; font-weight: 900; font-size: 14px; }
+
+        /* AMRAP SPECIAL */
+        .amrap-row { background: rgba(10, 132, 255, 0.1); border-left: 4px solid var(--primary); }
+        .amrap-badge { 
+            font-size: 10px; font-weight: 800; color: var(--primary); 
+            text-transform: uppercase; margin-bottom: 2px;
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            padding-bottom: var(--safe-bottom);
+            display: flex; justify-content: space-around;
+            z-index: 1000;
+        }
+        .nav-tab {
+            flex: 1; padding: 12px 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-sec); font-size: 10px; font-weight: 500;
+        }
+        .nav-tab.active { color: var(--primary); }
+        .nav-icon { font-size: 24px; margin-bottom: 4px; }
+
+        /* --- MODALS --- */
+        .modal {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg); z-index: 2000;
+            display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .modal.open { transform: translateY(0); }
+        
+        .modal-header {
+            padding: 16px; display: flex; justify-content: space-between; align-items: center;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+        }
+        .modal-title { font-weight: 700; font-size: 17px; }
+        .modal-content { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* --- TIMER --- */
+        #timer-overlay {
+            position: fixed; bottom: 100px; right: 20px;
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 12px 20px; border-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: flex; align-items: center; gap: 10px;
+            z-index: 1500; transform: scale(0); transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #timer-overlay.active { transform: scale(1); }
+        .timer-digits { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 20px; }
+
+        /* UTILS */
+        .hidden { display: none !important; }
+        .text-right { text-align: right; }
+    </style>
+</head>
+<body>
+
+    <!-- === APP CONTENT CONTAINER === -->
+    <div id="app-container">
+        
+        <!-- PAGE: WORKOUT -->
+        <div id="page-workout" class="page">
+            <h1>Iron 5/3/1</h1>
+            <h2>Let's make some gains.</h2>
+
+            <div class="card">
+                <div class="list-item">
+                    <span>Main Lift</span>
+                    <select id="lift-selector" onchange="renderWorkout()">
+                        <!-- JS Populated -->
+                    </select>
+                </div>
+                <div class="list-item">
+                    <span>Week</span>
+                    <select id="week-selector" onchange="renderWorkout()">
+                        <option value="0">Week 1 (5s)</option>
+                        <option value="1">Week 2 (3s)</option>
+                        <option value="2">Week 3 (1s)</option>
+                        <option value="3">Deload</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">Training Max (90% of <span id="true-1rm-label">...</span>)</div>
+            <div class="card" style="padding:16px; display:flex; justify-content:space-between; align-items:center;">
+                 <span style="color:var(--text-sec); font-size:14px;">WORKING TM</span>
+                 <span style="font-size:20px; font-weight:700;" id="tm-label">225</span>
+            </div>
+            
+            <div id="workout-list" class="card">
+                <!-- Sets go here -->
+            </div>
+
+            <div class="section-title">Supplemental</div>
+            <div class="card">
+                <div class="list-item">
+                    <span>Template</span>
+                    <select id="supp-selector" onchange="updateSettings('template', this.value); renderWorkout()">
+                        <option value="none">None</option>
+                        <option value="bbb">BBB (5x10 @ 50%)</option>
+                        <option value="fsl">FSL (5x5)</option>
+                        <option value="joker">Jokers (+5/10%)</option>
+                    </select>
+                </div>
+                <div id="supplemental-list"></div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="finishWorkout()">Finish Workout</button>
+        </div>
+
+        <!-- PAGE: HISTORY -->
+        <div id="page-history" class="page hidden">
+            <h1>Progress</h1>
+            
+            <!-- BODY WEIGHT CHECK-IN -->
+            <div class="card" style="margin-bottom:20px;">
+                <div class="list-item">
+                    <span style="font-weight:600;">Body Weight</span>
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" id="bw-input" placeholder="lbs" style="width:80px;">
+                        <button class="btn btn-primary" style="width:auto; padding:8px 16px; font-size:14px; margin:0;" onclick="logBodyWeight()">Log</button>
+                    </div>
+                </div>
+                <div id="bw-chart-container" style="height:100px; padding:10px;">
+                    <canvas id="bwChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 10px; height: 250px;">
+                <canvas id="progressChart"></canvas>
+            </div>
+            
+            <div class="section-title">Recent Logs</div>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- PAGE: SETTINGS -->
+        <div id="page-settings" class="page hidden">
+            <h1>Settings</h1>
+
+            <div class="section-title">Lifts & True 1RM</div>
+            <div id="lifts-config" class="card"></div>
+            <button class="btn" onclick="addLiftModal()">+ Add Custom Lift</button>
+
+            <div class="section-title">Configuration</div>
+            <div class="card">
+                <div class="list-item">
+                    <span>Rounding</span>
+                    <select onchange="updateSettings('rounding', this.value)">
+                        <option value="2.5">2.5 lbs</option>
+                        <option value="5">5 lbs</option>
+                    </select>
+                </div>
+                <div class="list-item">
+                    <span>Plate Loading</span>
+                    <span class="text-sec">45, 25, 10, 5, 2.5</span>
+                </div>
+                <div class="list-item">
+                    <span>Theme</span>
+                    <select onchange="toggleTheme(this.value)">
+                        <option value="dark">Dark</option>
+                        <option value="oled">OLED Black</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="section-title">Data</div>
+            <div class="card">
+                <div class="list-item" onclick="exportData()">
+                    <span>Export JSON</span>
+                    <span>⤓</span>
+                </div>
+                <div class="list-item" style="color: #ff453a;" onclick="resetAll()">
+                    <span>Reset All Data</span>
+                    <span>✖</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- === FLOATING TIMER === -->
+    <div id="timer-overlay" onclick="toggleTimer()">
+        <span class="timer-digits" id="timer-display">00:00</span>
+        <span style="font-size: 14px; opacity: 0.7;">REST</span>
+    </div>
+
+    <!-- === NAVBAR === -->
+    <nav>
+        <div class="nav-tab active" onclick="nav('workout')">
+            <span class="nav-icon">🏋️‍♂️</span>
+            <span>Train</span>
+        </div>
+        <div class="nav-tab" onclick="nav('history')">
+            <span class="nav-icon">📈</span>
+            <span>History</span>
+        </div>
+        <div class="nav-tab" onclick="nav('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Settings</span>
+        </div>
+    </nav>
+
+    <!-- === SCRIPTS === -->
+    <script>
+        // --- STATE ---
+        const defaultState = {
+            lifts: [
+                { id: 'sq', name: 'Squat', trueMax: 250, tm: 225 },
+                { id: 'bp', name: 'Bench', trueMax: 205, tm: 185 },
+                { id: 'dl', name: 'Deadlift', trueMax: 350, tm: 315 },
+                { id: 'ohp', name: 'OHP', trueMax: 150, tm: 135 }
+            ],
+            settings: {
+                rounding: 5,
+                template: 'bbb',
+                unit: 'lbs'
+            },
+            history: [],
+            bodyweight: [] // { date, weight }
+        };
+
+        let app = JSON.parse(localStorage.getItem('iron531_v3')) || defaultState;
+        // Migration for v3.0 users
+        if(!app.bodyweight) app.bodyweight = [];
+        app.lifts.forEach(l => { if(!l.trueMax) l.trueMax = Math.round(l.tm / 0.9); });
+
+        let activeTimer = null;
+        let timerSecs = 0;
+        let chart = null;
+        let bwChartInstance = null;
+
+        // --- CORE FUNCTIONS ---
+        function init() {
+            renderSelectors();
+            renderSettingsLifts();
+            renderWorkout();
+            if(app.history.length > 0 || app.bodyweight.length > 0) renderHistory();
+        }
+
+        function save() {
+            localStorage.setItem('iron531_v3', JSON.stringify(app));
+        }
+
+        function nav(page) {
+            document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+            document.getElementById('page-' + page).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active'); 
+
+            if(page === 'history') {
+                updateChart();
+                updateBwChart();
+            }
+        }
+
+        // --- RENDER WORKOUT ---
+        const WEEKS = [
+            { name: "5s", sets: [0.65, 0.75, 0.85], reps: [5, 5, "5+"] },
+            { name: "3s", sets: [0.70, 0.80, 0.90], reps: [3, 3, "3+"] },
+            { name: "1s", sets: [0.75, 0.85, 0.95], reps: [5, 3, "1+"] },
+            { name: "Deload", sets: [0.40, 0.50, 0.60], reps: [5, 5, 5] }
+        ];
+
+        function renderWorkout() {
+            const liftId = document.getElementById('lift-selector').value;
+            const weekIdx = parseInt(document.getElementById('week-selector').value);
+            const lift = app.lifts.find(l => l.id === liftId);
+            
+            if(!lift) return;
+            document.getElementById('tm-label').textContent = lift.tm;
+            document.getElementById('true-1rm-label').textContent = lift.trueMax || Math.round(lift.tm/0.9);
+
+            const container = document.getElementById('workout-list');
+            container.innerHTML = '';
+
+            // Warmups
+            [0.4, 0.5, 0.6].forEach((pct, i) => {
+                const w = calcWeight(lift.tm * pct);
+                container.innerHTML += createSetHtml(w, 5, `Warmup ${i+1}`, false);
+            });
+
+            // Main Sets
+            const week = WEEKS[weekIdx];
+            week.sets.forEach((pct, i) => {
+                const w = calcWeight(lift.tm * pct);
+                const isAmrap = typeof week.reps[i] === 'string';
+                container.innerHTML += createSetHtml(w, week.reps[i], `Set ${i+1}`, isAmrap, lift.id);
+            });
+
+            // Supplemental
+            renderSupplemental(lift, weekIdx);
+        }
+
+        function renderSupplemental(lift, weekIdx) {
+            const container = document.getElementById('supplemental-list');
+            container.innerHTML = '';
+            const mode = app.settings.template;
+            
+            if(mode === 'bbb') {
+                const w = calcWeight(lift.tm * 0.5);
+                for(let i=0; i<5; i++) container.innerHTML += createSetHtml(w, 10, 'BBB', false);
+            } else if (mode === 'fsl') {
+                const w = calcWeight(lift.tm * WEEKS[weekIdx].sets[0]);
+                for(let i=0; i<5; i++) container.innerHTML += createSetHtml(w, 5, 'FSL', false);
+            } else if (mode === 'joker' && weekIdx !== 3) {
+                 const w1 = calcWeight(lift.tm * 1.05);
+                 const w2 = calcWeight(lift.tm * 1.10);
+                 container.innerHTML += createSetHtml(w1, 1, 'Joker +5%', false);
+                 container.innerHTML += createSetHtml(w2, 1, 'Joker +10%', false);
+            } else {
+                container.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-sec)">No supplemental work selected.</div>`;
+            }
+        }
+
+        function createSetHtml(weight, reps, label, isAmrap, liftId) {
+            const plates = getPlates(weight);
+            const rowClass = isAmrap ? 'set-row amrap-row' : 'set-row';
+            const badge = isAmrap ? '<div class="amrap-badge">PR SET</div>' : '';
+            
+            let rightSide = `<div class="checkbox"></div>`;
+            if(isAmrap) {
+                rightSide = `
+                    <div style="text-align:right">
+                        <input type="number" id="amrap-input" placeholder="${reps}" 
+                               style="width:50px; text-align:center; background:rgba(0,0,0,0.2); border-radius:4px; padding:4px;">
+                        <div style="font-size:10px; color:var(--primary); margin-top:2px;">LOG REPS</div>
+                    </div>
+                    <div class="checkbox" onclick="logAmrap('${liftId}', ${weight})"></div>
+                `;
+            }
+
+            return `
+                <div class="${rowClass}" onclick="toggleSet(this)">
+                    <div style="flex:1">
+                        ${badge}
+                        <div style="font-size:15px; font-weight:600;">${label}</div>
+                        <div class="plate-stack">${plates}</div>
+                    </div>
+                    <div style="font-size:18px; font-weight:700; margin-right:16px;">
+                        ${weight}<span style="font-size:12px; font-weight:400; color:var(--text-sec)">lbs</span> 
+                        <span style="color:var(--text-sec); margin:0 4px;">×</span> ${reps}
+                    </div>
+                    ${rightSide}
+                </div>
+            `;
+        }
+
+        // --- MATH HELPERS ---
+        function calcWeight(val) {
+            const round = app.settings.rounding || 5;
+            return Math.round(val / round) * round;
+        }
+
+        function getPlates(weight) {
+            let w = (weight - 45) / 2;
+            if(w <= 0) return "Bar only";
+            const plates = [45, 35, 25, 10, 5, 2.5];
+            const load = [];
+            plates.forEach(p => {
+                while(w >= p) { load.push(p); w -= p; }
+            });
+            return load.length ? load.join(', ') : "Bar";
+        }
+
+        // --- ACTIONS ---
+        function toggleSet(el) {
+            if(el.querySelector('input')) return; 
+            el.classList.toggle('done');
+            if(el.classList.contains('done')) startTimer();
+        }
+
+        function logAmrap(liftId, weight) {
+            const input = document.getElementById('amrap-input');
+            const reps = parseInt(input.value) || 0;
+            if(reps === 0) return;
+
+            const est1rm = Math.round(weight * (1 + reps/30));
+            app.history.push({
+                date: new Date().toISOString(),
+                liftId, weight, reps, est1rm
+            });
+            save();
+            alert(`PR Logged! Estimated 1RM: ${est1rm} lbs`);
+            event.stopPropagation();
+        }
+
+        function logBodyWeight() {
+            const input = document.getElementById('bw-input');
+            const weight = parseFloat(input.value);
+            if(!weight) return;
+            
+            app.bodyweight.push({
+                date: new Date().toISOString(),
+                weight: weight
+            });
+            save();
+            input.value = '';
+            updateBwChart();
+        }
+
+        function finishWorkout() {
+            if(confirm("Complete workout?")) location.reload();
+        }
+
+        // --- SETTINGS LOGIC ---
+        function renderSettingsLifts() {
+            const c = document.getElementById('lifts-config');
+            c.innerHTML = '';
+            app.lifts.forEach((l, idx) => {
+                c.innerHTML += `
+                    <div class="list-item">
+                        <input value="${l.name}" onchange="updateLift(${idx}, 'name', this.value)" style="text-align:left; font-weight:600; width:100px;">
+                        
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div style="text-align:right">
+                                <span style="font-size:10px; color:var(--text-sec)">TRUE 1RM</span><br>
+                                <input type="number" value="${l.trueMax}" onchange="updateLift(${idx}, 'trueMax', this.value)" style="width:60px; font-weight:700;">
+                            </div>
+                            <div style="text-align:right">
+                                <span style="font-size:10px; color:var(--text-sec)">TM (90%)</span><br>
+                                <span style="font-size:14px; color:var(--text-sec); margin-right:8px;">${l.tm}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateLift(idx, field, val) {
+            if(field === 'trueMax') {
+                const max = parseFloat(val);
+                app.lifts[idx].trueMax = max;
+                app.lifts[idx].tm = Math.round((max * 0.9) / 5) * 5; // Auto calc TM
+            } else {
+                app.lifts[idx][field] = val;
+            }
+            save();
+            renderSettingsLifts(); // Refresh to show new TM
+            renderSelectors();
+        }
+
+        function updateSettings(key, val) {
+            app.settings[key] = val;
+            save();
+        }
+
+        function renderSelectors() {
+            const sel = document.getElementById('lift-selector');
+            const savedVal = sel.value;
+            sel.innerHTML = '';
+            app.lifts.forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.text = l.name;
+                sel.add(opt);
+            });
+            if(savedVal) sel.value = savedVal;
+        }
+
+        function resetAll() {
+            if(confirm("Delete all data? This cannot be undone.")) {
+                localStorage.removeItem('iron531_v3');
+                location.reload();
+            }
+        }
+
+        // --- HISTORY & CHART ---
+        function renderHistory() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            [...app.history].reverse().slice(0, 10).forEach(h => {
+                const l = app.lifts.find(x => x.id === h.liftId);
+                const name = l ? l.name : h.liftId;
+                const d = new Date(h.date).toLocaleDateString();
+                list.innerHTML += `
+                    <div class="list-item">
+                        <div>
+                            <div style="font-weight:600">${name}</div>
+                            <div style="font-size:12px; color:var(--text-sec)">${d}</div>
+                        </div>
+                        <div class="text-right">
+                            <div style="font-weight:700; color:var(--primary)">${h.est1rm} <span style="font-size:10px">1RM</span></div>
+                            <div style="font-size:12px; color:var(--text-sec)">${h.weight} x ${h.reps}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            if(chart) chart.destroy();
+            
+            const datasets = app.lifts.map((lift, i) => {
+                const data = app.history
+                    .filter(h => h.liftId === lift.id)
+                    .sort((a,b) => new Date(a.date) - new Date(b.date))
+                    .map(h => ({ x: h.date, y: h.est1rm }));
+                
+                const colors = ['#0a84ff', '#ff375f', '#30d158', '#ffd60a'];
+                return {
+                    label: lift.name,
+                    data: data,
+                    borderColor: colors[i % colors.length],
+                    tension: 0.4
+                };
+            });
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { type: 'category', display: false },
+                        y: { grid: { color: '#333' } }
+                    },
+                    plugins: { legend: { labels: { color: 'white' } } }
+                }
+            });
+        }
+
+        function updateBwChart() {
+            const ctx = document.getElementById('bwChart').getContext('2d');
+            if(bwChartInstance) bwChartInstance.destroy();
+
+            const data = app.bodyweight
+                .sort((a,b) => new Date(a.date) - new Date(b.date))
+                .map(bw => ({ x: bw.date, y: bw.weight }));
+
+            if(data.length < 1) return;
+
+            bwChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Body Weight',
+                        data: data,
+                        borderColor: '#30d158',
+                        tension: 0.3,
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { display: false }, y: { display: false } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- TIMER ---
+        function startTimer() {
+            const overlay = document.getElementById('timer-overlay');
+            overlay.classList.add('active');
+            timerSecs = 0;
+            if(activeTimer) clearInterval(activeTimer);
+            activeTimer = setInterval(() => {
+                timerSecs++;
+                const m = Math.floor(timerSecs / 60).toString().padStart(2, '0');
+                const s = (timerSecs % 60).toString().padStart(2, '0');
+                document.getElementById('timer-display').textContent = `${m}:${s}`;
+            }, 1000);
+        }
+
+        function toggleTimer() {
+            const overlay = document.getElementById('timer-overlay');
+            if(overlay.classList.contains('active')) {
+                overlay.classList.remove('active');
+                clearInterval(activeTimer);
+            } else {
+                startTimer();
+            }
+        }
+
+        // Boot
+        init();
+
+    </script>
+</body>
+</html>

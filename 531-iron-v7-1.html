@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Iron 5/3/1 v7.1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --surface-2: #2c2c2e;
+            --primary: #0a84ff;
+            --accent: #ff375f;
+            --success: #32d74b;
+            --text: #ffffff;
+            --text-sec: #8e8e93;
+            --border: #38383a;
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #app { flex: 1; overflow-y: auto; padding: 20px 16px 140px 16px; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
+        
+        h1 { font-size: 28px; margin: 0 0 8px 0; }
+        .card { background: var(--surface); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); }
+        .row:last-child { border-bottom: none; }
+        
+        input, select { 
+            background: transparent; border: none; color: var(--primary); 
+            font-size: 18px; text-align: right; text-align-last: right;
+            outline: none; font-weight: 600; 
+            min-width: 80px; max-width: 60%; direction: rtl;
+            border-radius: 0; /* iOS reset */
+        }
+        select option { direction: ltr; }
+
+        .btn { width: 100%; padding: 16px; background: var(--surface-2); color: var(--primary); font-size: 17px; font-weight: 600; border: none; border-radius: 12px; margin-bottom: 16px; cursor: pointer; }
+        .btn:active { opacity: 0.7; }
+        .btn-primary { background: var(--primary); color: white; }
+        
+        /* Barbell Visual */
+        .bar-container { height: 80px; display: flex; align-items: center; justify-content: center; background: #111; border-bottom: 1px solid var(--border); }
+        .bar { width: 100%; height: 10px; background: #666; position: relative; display: flex; justify-content: center; }
+        .plate { height: 50px; width: 8px; margin: 0 1px; border-radius: 2px; }
+        
+        /* Plate Colors */
+        .p-45 { background: #0a84ff; height: 60px; width: 12px; }
+        .p-25 { background: #32d74b; height: 50px; width: 10px; }
+        .p-15 { background: #ffd60a; height: 42px; width: 8px; }
+        .p-10 { background: #fff; height: 35px; width: 6px; }
+        .p-5 { background: #ff375f; height: 28px; width: 5px; } 
+        .p-2_5 { background: #888; border: 1px solid #fff; height: 20px; width: 4px; }
+
+        /* Set Rows */
+        .set-row { display: flex; padding: 14px 16px; border-bottom: 1px solid var(--border); align-items: center; transition: 0.2s; cursor: pointer; }
+        .set-row:active { background: var(--surface-2); }
+        .set-row.done { background: rgba(50, 215, 75, 0.15); }
+        .plate-instruction { font-size: 11px; color: var(--text-sec); margin-top: 4px; font-family: monospace; }
+        .delta-instruction { color: var(--success); font-weight: 700; }
+        
+        .check { width: 32px; height: 32px; border: 2px solid var(--text-sec); border-radius: 50%; margin-left: auto; display: flex; justify-content: center; align-items: center; }
+        .set-row.done .check { background: var(--success); border-color: var(--success); color: #000; }
+        .set-row.done .check:after { content: "✓"; font-weight: 900; }
+
+        /* Nav */
+        nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; width: 100%; 
+            background: rgba(28,28,30,0.98); 
+            border-top: 1px solid var(--border); 
+            display: flex; 
+            padding-bottom: max(10px, var(--safe-bottom)); 
+            z-index: 9999;
+        }
+        .nav-item { 
+            flex: 1; border: none; background: none; 
+            padding: 10px; text-align: center; color: var(--text-sec); 
+            font-size: 10px; opacity: 0.7; cursor: pointer;
+            -webkit-appearance: none; /* iOS reset */
+        }
+        .nav-item.active { color: var(--primary); opacity: 1; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body ontouchstart="">
+
+<div id="app">
+    <!-- TRAIN -->
+    <div id="view-train">
+        <h1>Iron 5/3/1 <span style="font-size:12px; background:var(--surface-2); padding:2px 8px; border-radius:12px;">v7.1</span></h1>
+        
+        <!-- VISUAL BAR -->
+        <div class="card">
+            <div class="bar-container">
+                <div class="bar">
+                    <div style="position:absolute; left:0; top:-5px; display:flex; flex-direction:row-reverse;" id="bar-left"></div>
+                    <div style="position:absolute; right:0; top:-5px; display:flex;" id="bar-right"></div>
+                </div>
+            </div>
+            <div style="text-align:center; padding:10px; font-weight:700; color:var(--text-sec);">
+                LOAD: <span id="bar-weight" style="color:var(--text); font-size:20px;">45</span> lbs
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="card">
+            <div class="row">
+                <span>Lift</span>
+                <select id="lift-select"></select>
+            </div>
+            <div class="row">
+                <span>Week</span>
+                <select id="week-select">
+                    <option value="0">Week 1 (5s)</option>
+                    <option value="1">Week 2 (3s)</option>
+                    <option value="2">Week 3 (1s)</option>
+                    <option value="3">Deload</option>
+                </select>
+            </div>
+            <div class="row" style="background:var(--surface-2); padding:8px 16px;">
+                <span style="font-size:11px; color:var(--text-sec);">BASED ON TM (90%)</span>
+                <span style="font-size:13px; font-weight:700;" id="tm-display">...</span>
+            </div>
+        </div>
+
+        <div id="workout-sets" class="card"></div>
+        <button class="btn btn-primary" id="btn-finish" style="margin-top:20px; z-index:10;">Finish & Save Workout</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="view-settings" class="hidden">
+        <h1>Settings</h1>
+        <div class="card row">
+            <span>Profile</span>
+            <select id="profile-select"></select>
+        </div>
+        <div class="row" id="btn-add-profile" style="color:var(--primary); justify-content:center; cursor:pointer;">+ New Profile</div>
+
+        <div style="margin-top:20px;" id="lifts-config"></div>
+        <button class="btn" id="btn-add-lift">+ Add Custom Lift</button>
+        <button class="btn" style="color:#ff375f" id="btn-reset">Factory Reset</button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="view-progress" class="hidden">
+        <h1>History</h1>
+        <div class="card" style="height:250px; padding:10px;">
+            <canvas id="chart"></canvas>
+        </div>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<nav>
+    <button class="nav-item active" id="nav-train"><span class="nav-icon">🏋️</span>Train</button>
+    <button class="nav-item" id="nav-progress"><span class="nav-icon">📈</span>Progress</button>
+    <button class="nav-item" id="nav-settings"><span class="nav-icon">⚙️</span>Settings</button>
+</nav>
+
+<script>
+    // --- CONFIG ---
+    const PLATES = [45, 25, 15, 10, 5, 2.5]; 
+    const PLATE_CLASSES = ['p-45', 'p-25', 'p-15', 'p-10', 'p-5', 'p-2_5'];
+    
+    // --- STATE ---
+    const DEFAULT_LIFTS = [
+        { id: 'sq', name: 'Squat', trueMax: 225, tm: 200 },
+        { id: 'bp', name: 'Bench', trueMax: 185, tm: 165 },
+        { id: 'dl', name: 'Deadlift', trueMax: 315, tm: 285 },
+        { id: 'tbdl', name: 'Trap Bar DL', trueMax: 315, tm: 285 },
+        { id: 'ohp', name: 'OHP', trueMax: 135, tm: 120 }
+    ];
+
+    let db = JSON.parse(localStorage.getItem('iron531_v7')) || {
+        activeId: 'p1',
+        profiles: { 'p1': { name: 'Lifter 1', lifts: JSON.parse(JSON.stringify(DEFAULT_LIFTS)), history: [] } }
+    };
+
+    const getActive = () => db.profiles[db.activeId];
+    const saveDb = () => localStorage.setItem('iron531_v7', JSON.stringify(db));
+
+    // --- DOM ---
+    const els = {
+        views: { train: document.getElementById('view-train'), settings: document.getElementById('view-settings'), progress: document.getElementById('view-progress') },
+        nav: { train: document.getElementById('nav-train'), settings: document.getElementById('nav-settings'), progress: document.getElementById('nav-progress') },
+        liftSel: document.getElementById('lift-select'),
+        weekSel: document.getElementById('week-select'),
+        profileSel: document.getElementById('profile-select'),
+        setsDiv: document.getElementById('workout-sets'),
+        liftsConfig: document.getElementById('lifts-config'),
+        barLeft: document.getElementById('bar-left'),
+        barRight: document.getElementById('bar-right'),
+        barWeight: document.getElementById('bar-weight'),
+        tmDisplay: document.getElementById('tm-display')
+    };
+
+    // --- INIT ---
+    function init() {
+        // iOS Fix: Use click for buttons, ensure event bubbling
+        els.nav.train.onclick = () => switchView('train');
+        els.nav.settings.onclick = () => switchView('settings');
+        els.nav.progress.onclick = () => switchView('progress');
+        
+        els.liftSel.addEventListener('change', renderWorkout);
+        els.weekSel.addEventListener('change', renderWorkout);
+        els.profileSel.addEventListener('change', switchProfile);
+        
+        document.getElementById('btn-add-lift').onclick = addLift;
+        document.getElementById('btn-add-profile').onclick = addProfile;
+        document.getElementById('btn-reset').onclick = resetData;
+        document.getElementById('btn-finish').onclick = finishWorkout;
+
+        renderProfileSelect();
+        renderSelectors();
+        renderWorkout();
+    }
+
+    function switchView(view) {
+        Object.values(els.views).forEach(el => el.classList.add('hidden'));
+        Object.values(els.nav).forEach(el => el.classList.remove('active'));
+        els.views[view].classList.remove('hidden');
+        els.nav[view].classList.add('active');
+        if(view === 'settings') renderSettings();
+        if(view === 'progress') renderHistory();
+        window.scrollTo(0,0);
+    }
+
+    // --- MATH ---
+    function calculatePlates(weight) {
+        let w = (weight - 45) / 2;
+        if (w <= 0) return { plates: [], text: "Bar Empty" };
+        
+        const loaded = [];
+        PLATES.forEach((p, i) => {
+            while (w >= p) {
+                loaded.push({ weight: p, cls: PLATE_CLASSES[i] });
+                w -= p;
+            }
+        });
+        return { 
+            plates: loaded, 
+            text: loaded.map(l => l.weight).join(', ') 
+        };
+    }
+
+    function getDeltaText(currentWeight, prevWeight) {
+        if (!prevWeight) return `Load: ${calculatePlates(currentWeight).text}`;
+        
+        const diff = (currentWeight - prevWeight) / 2;
+        if (diff === 0) return "Keep weight same";
+        if (diff < 0) return `Remove: ${calculatePlates(45 + Math.abs(diff)*2).text}`; 
+        
+        let w = diff;
+        const added = [];
+        PLATES.forEach(p => {
+            while (w >= p) {
+                added.push(p);
+                w -= p;
+            }
+        });
+        return `Add: ${added.join(', ')} / side`;
+    }
+
+    // --- WORKOUT ---
+    function renderSelectors() {
+        els.liftSel.innerHTML = '';
+        getActive().lifts.forEach(l => {
+            let opt = document.createElement('option');
+            opt.value = l.id; opt.text = l.name;
+            els.liftSel.add(opt);
+        });
+    }
+
+    function renderWorkout() {
+        const lift = getActive().lifts.find(l => l.id === els.liftSel.value);
+        const week = [
+            { sets: [0.65, 0.75, 0.85], reps: [5, 5, "5+"] },
+            { sets: [0.70, 0.80, 0.90], reps: [3, 3, "3+"] },
+            { sets: [0.75, 0.85, 0.95], reps: [5, 3, "1+"] },
+            { sets: [0.40, 0.50, 0.60], reps: [5, 5, 5] }
+        ][els.weekSel.value];
+
+        if(!lift) return;
+        els.tmDisplay.innerText = `${lift.tm} lbs`;
+        els.setsDiv.innerHTML = '';
+        
+        let prevWeight = 0;
+
+        // Warmups
+        [0.4, 0.5, 0.6].forEach(p => {
+            const w = Math.round((lift.tm*p)/5)*5;
+            appendSet(w, 5, "Warmup", p, prevWeight);
+            prevWeight = w;
+        });
+        
+        // Main
+        week.sets.forEach((p, i) => {
+            const w = Math.round((lift.tm*p)/5)*5;
+            appendSet(w, week.reps[i], `Set ${i+1}`, p, prevWeight, typeof week.reps[i] === 'string');
+            prevWeight = w;
+        });
+
+        // Init visual with first set
+        drawBar(Math.round((lift.tm*0.4)/5)*5);
+    }
+
+    function appendSet(weight, reps, label, pct, prevWeight, isAmrap=false) {
+        const div = document.createElement('div');
+        div.className = 'set-row';
+        div.dataset.weight = weight;
+        div.dataset.reps = reps;
+        div.dataset.label = label;
+        
+        if(isAmrap) div.style.borderLeft = "4px solid #0a84ff";
+        
+        const instruction = getDeltaText(weight, prevWeight);
+        const pctText = Math.round(pct * 100) + "%";
+        const instrClass = instruction.startsWith("Add") ? "delta-instruction" : "plate-instruction";
+
+        let amrapHtml = '';
+        if(isAmrap) {
+            amrapHtml = `<div style="font-size:10px; color:#0a84ff; margin-top:2px;">AMRAP (Tap to Record)</div>`;
+        }
+
+        div.innerHTML = `
+            <div style="flex:1">
+                <div style="font-size:12px; color:var(--text-sec); font-weight:700; text-transform:uppercase;">
+                    ${label} <span style="color:var(--primary); margin-left:4px;">${pctText}</span>
+                </div>
+                <div style="font-size:18px; font-weight:700;">${weight} <span style="font-size:14px; font-weight:400; color:var(--text-sec);">lbs</span></div>
+                <div class="${instrClass}">${instruction}</div>
+                ${amrapHtml}
+            </div>
+            <div style="font-weight:700; margin-right:20px; font-size:18px;">${reps}</div>
+            <div class="check"></div>
+        `;
+        
+        div.onclick = () => {
+            div.classList.toggle('done');
+            drawBar(weight);
+            if(isAmrap && div.classList.contains('done')) {
+                const actual = prompt("How many reps did you get?", reps.replace('+',''));
+                if(actual) div.dataset.actualReps = actual;
+            }
+        };
+        
+        els.setsDiv.appendChild(div);
+    }
+
+    function drawBar(weight) {
+        els.barWeight.innerText = weight;
+        els.barLeft.innerHTML = ''; els.barRight.innerHTML = '';
+        const { plates } = calculatePlates(weight);
+        
+        plates.forEach(p => {
+            els.barLeft.innerHTML += `<div class="plate ${p.cls}"></div>`;
+            els.barRight.prepend(Object.assign(document.createElement('div'), {className:`plate ${p.cls}`}));
+        });
+    }
+
+    function finishWorkout() {
+        const completed = document.querySelectorAll('.set-row.done');
+        if(completed.length === 0) {
+            alert("No sets completed!");
+            return;
+        }
+
+        const liftName = getActive().lifts.find(l => l.id === els.liftSel.value).name;
+        const date = new Date().toISOString();
+        
+        completed.forEach(row => {
+            const isAmrap = row.dataset.reps.includes('+');
+            const reps = row.dataset.actualReps || row.dataset.reps.replace('+','');
+            
+            getActive().history.push({
+                date: date,
+                lift: liftName,
+                weight: parseInt(row.dataset.weight),
+                reps: parseInt(reps),
+                isPrSet: isAmrap
+            });
+        });
+
+        saveDb();
+        alert("Workout Saved!");
+        switchView('progress'); // Go to progress instead of reload
+    }
+
+    // --- HISTORY ---
+    let chartInstance = null;
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        list.innerHTML = '';
+        
+        const history = getActive().history.slice().reverse();
+        if(history.length === 0) {
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No workouts logged yet.</div>';
+            return;
+        }
+
+        history.slice(0, 10).forEach(h => {
+            const div = document.createElement('div');
+            div.className = 'set-row';
+            div.style.padding = "10px";
+            const date = new Date(h.date).toLocaleDateString();
+            const est1rm = Math.round(h.weight * (1 + h.reps/30));
+            
+            div.innerHTML = `
+                <div style="flex:1">
+                    <div style="font-weight:700;">${h.lift}</div>
+                    <div style="font-size:12px; color:var(--text-sec);">${date}</div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-weight:700;">${h.weight} x ${h.reps}</div>
+                    <div style="font-size:11px; color:var(--primary);">1RM: ${est1rm}</div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+
+        const ctx = document.getElementById('chart').getContext('2d');
+        if(chartInstance) chartInstance.destroy();
+        
+        const currentLiftName = getActive().lifts.find(l => l.id === els.liftSel.value).name;
+        const chartData = getActive().history
+            .filter(h => h.lift === currentLiftName)
+            .map(h => ({ x: h.date, y: Math.round(h.weight * (1 + h.reps/30)) }));
+
+        if(chartData.length > 0) {
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => new Date(d.x).toLocaleDateString()),
+                    datasets: [{
+                        label: `Est. 1RM (${currentLiftName})`,
+                        data: chartData.map(d => d.y),
+                        borderColor: '#0a84ff',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { x: { display: false }, y: { grid: { color: '#333' } } }
+                }
+            });
+        }
+    }
+
+    // --- PROFILES & SETTINGS ---
+    function renderProfileSelect() {
+        els.profileSel.innerHTML = '';
+        Object.keys(db.profiles).forEach(id => {
+            let opt = document.createElement('option');
+            opt.value = id; opt.text = db.profiles[id].name;
+            els.profileSel.add(opt);
+        });
+        els.profileSel.value = db.activeId;
+    }
+
+    function switchProfile() {
+        db.activeId = els.profileSel.value;
+        saveDb();
+        renderSelectors();
+        renderSettings();
+        renderWorkout();
+    }
+
+    function addProfile() {
+        const name = prompt("New Profile Name:");
+        if(!name) return;
+        const id = 'p_' + Date.now();
+        db.profiles[id] = { name: name, lifts: JSON.parse(JSON.stringify(DEFAULT_LIFTS)), history: [] };
+        db.activeId = id;
+        saveDb();
+        renderProfileSelect();
+        renderSettings();
+    }
+
+    function renderSettings() {
+        els.liftsConfig.innerHTML = '';
+        getActive().lifts.forEach((l, i) => {
+            const div = document.createElement('div');
+            div.className = 'card row';
+            div.innerHTML = `
+                <input value="${l.name}" onchange="updateLift(${i}, 'name', this.value)" style="text-align:left; flex:1;">
+                <div style="text-align:right;">
+                    <span style="font-size:10px; color:var(--text-sec);">TRUE 1RM</span><br>
+                    <input type="number" value="${l.trueMax}" onchange="updateLift(${i}, 'trueMax', this.value)">
+                </div>
+            `;
+            els.liftsConfig.appendChild(div);
+        });
+    }
+
+    window.updateLift = (i, field, val) => {
+        const active = getActive();
+        if(field === 'trueMax') {
+            active.lifts[i].trueMax = parseFloat(val);
+            active.lifts[i].tm = Math.round((parseFloat(val)*0.9)/5)*5;
+        } else {
+            active.lifts[i][field] = val;
+        }
+        saveDb();
+        renderSelectors();
+    };
+
+    function addLift() { getActive().lifts.push({ id: Date.now().toString(), name: 'New', trueMax: 100, tm: 90 }); saveDb(); renderSettings(); }
+    function resetData() { if(confirm("Erase all data?")) { localStorage.removeItem('iron531_v7'); location.reload(); } }
+
+    init();
+</script>
+</body>
+</html>

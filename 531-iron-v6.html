@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    <title>Iron 5/3/1 v6</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #1c1c1e;
+            --surface-2: #2c2c2e;
+            --primary: #0a84ff;
+            --accent: #ff375f;
+            --success: #32d74b;
+            --text: #ffffff;
+            --text-sec: #8e8e93;
+            --border: #38383a;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        #app { flex: 1; overflow-y: auto; padding: 20px 16px 120px 16px; -webkit-overflow-scrolling: touch; }
+        .hidden { display: none !important; }
+        
+        /* UI Components */
+        h1 { font-size: 28px; margin: 0 0 8px 0; }
+        .card { background: var(--surface); border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid var(--border); }
+        .row:last-child { border-bottom: none; }
+        
+        /* Input Fix: Auto width, right aligned */
+        input, select { 
+            background: transparent; border: none; color: var(--primary); 
+            font-size: 18px; text-align: right; text-align-last: right;
+            outline: none; font-weight: 600; 
+            min-width: 80px; max-width: 60%; /* Prevent cutoff */
+            direction: rtl; /* Ensures text end is visible if truncated */
+        }
+        select option { direction: ltr; }
+
+        .btn { width: 100%; padding: 16px; background: var(--surface-2); color: var(--primary); font-size: 17px; font-weight: 600; border: none; border-radius: 12px; margin-bottom: 16px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { color: #ff375f; }
+
+        /* Profile Badge */
+        .profile-badge { 
+            display: inline-block; background: var(--surface-2); 
+            padding: 4px 10px; border-radius: 20px; 
+            font-size: 12px; color: var(--text-sec); font-weight: 600; vertical-align: middle; 
+        }
+
+        /* Barbell */
+        .bar-container { height: 80px; display: flex; align-items: center; justify-content: center; background: #111; border-bottom: 1px solid var(--border); }
+        .bar { width: 100%; height: 10px; background: #666; position: relative; display: flex; justify-content: center; }
+        .plate { height: 50px; width: 8px; margin: 0 1px; border-radius: 2px; }
+        .p-45 { background: #0a84ff; height: 60px; width: 12px; }
+        .p-25 { background: #32d74b; height: 50px; width: 10px; }
+        .p-10 { background: #fff; height: 35px; width: 6px; }
+        .p-5 { background: #ff375f; height: 28px; width: 5px; } 
+        .p-2_5 { background: #000; border: 1px solid #fff; height: 20px; width: 4px; }
+
+        /* Sets */
+        .set-row { display: flex; padding: 16px; border-bottom: 1px solid var(--border); align-items: center; transition: 0.2s; }
+        .set-row.done { background: rgba(50, 215, 75, 0.15); }
+        .check { width: 28px; height: 28px; border: 2px solid var(--text-sec); border-radius: 50%; margin-left: auto; display: flex; justify-content: center; align-items: center; }
+        .set-row.done .check { background: var(--success); border-color: var(--success); color: #000; }
+        .set-row.done .check:after { content: "✓"; font-weight: 900; }
+
+        /* Nav */
+        nav { position: fixed; bottom: 0; width: 100%; background: rgba(28,28,30,0.95); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; padding-bottom: env(safe-area-inset-bottom); z-index: 100; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; color: var(--text-sec); font-size: 10px; opacity: 0.7; }
+        .nav-item.active { color: var(--primary); opacity: 1; }
+        .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <!-- TRAIN -->
+    <div id="view-train">
+        <h1>Iron 5/3/1 <span class="profile-badge" id="header-profile-name">User</span></h1>
+        
+        <div class="card">
+            <div class="bar-container">
+                <div class="bar">
+                    <div style="position:absolute; left:0; top:-5px; display:flex; flex-direction:row-reverse;" id="bar-left"></div>
+                    <div style="position:absolute; right:0; top:-5px; display:flex;" id="bar-right"></div>
+                </div>
+            </div>
+            <div style="text-align:center; padding:10px; font-weight:700; color:var(--text-sec);">
+                LOAD: <span id="bar-weight" style="color:var(--text); font-size:20px;">45</span> lbs
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="row">
+                <span>Lift</span>
+                <select id="lift-select"></select>
+            </div>
+            <div class="row">
+                <span>Week</span>
+                <select id="week-select">
+                    <option value="0">Week 1 (5s)</option>
+                    <option value="1">Week 2 (3s)</option>
+                    <option value="2">Week 3 (1s)</option>
+                    <option value="3">Deload</option>
+                </select>
+            </div>
+            <div class="row" style="background:var(--surface-2); padding:10px 16px;">
+                <span style="font-size:12px; color:var(--text-sec);">BASED ON TM (90%)</span>
+                <span style="font-size:14px; font-weight:700;" id="tm-display">...</span>
+            </div>
+        </div>
+
+        <div id="workout-sets" class="card"></div>
+        <button class="btn btn-primary" id="btn-finish">Finish Workout</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="view-settings" class="hidden">
+        <h1>Profiles</h1>
+        <div class="card">
+            <div class="row">
+                <span>Current Profile</span>
+                <select id="profile-select"></select>
+            </div>
+            <div class="row" id="row-add-profile" style="color:var(--primary); font-weight:600; cursor:pointer; justify-content:center;">
+                + Create New Profile
+            </div>
+        </div>
+
+        <h1>Configure Lifts</h1>
+        <p style="color:var(--text-sec); margin-bottom:20px;">For: <strong id="settings-profile-name">User</strong></p>
+        
+        <div id="lifts-config"></div>
+        <button class="btn" id="btn-add-lift">+ Add Lift</button>
+        <button class="btn btn-danger" id="btn-delete-profile">Delete This Profile</button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div id="view-progress" class="hidden">
+        <h1>Progress</h1>
+        <div class="card" style="height:250px; padding:10px;">
+            <canvas id="chart"></canvas>
+        </div>
+        <div id="history-list"></div>
+    </div>
+</div>
+
+<nav>
+    <div class="nav-item active" id="nav-train"><span class="nav-icon">🏋️</span>Train</div>
+    <div class="nav-item" id="nav-progress"><span class="nav-icon">📈</span>Progress</div>
+    <div class="nav-item" id="nav-settings"><span class="nav-icon">⚙️</span>Settings</div>
+</nav>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    const DEFAULT_LIFTS = [
+        { id: 'sq', name: 'Squat', trueMax: 225, tm: 200 },
+        { id: 'bp', name: 'Bench', trueMax: 185, tm: 165 },
+        { id: 'dl', name: 'Deadlift', trueMax: 315, tm: 285 },
+        { id: 'tbdl', name: 'Trap Bar DL', trueMax: 315, tm: 285 },
+        { id: 'ohp', name: 'OHP', trueMax: 135, tm: 120 }
+    ];
+
+    // Data Structure: { activeId: 'p1', profiles: { 'p1': { name: 'Nathan', lifts: [], history: [] } } }
+    let db = JSON.parse(localStorage.getItem('iron531_v6')) || {
+        activeId: 'default',
+        profiles: {
+            'default': { name: 'Lifter 1', lifts: JSON.parse(JSON.stringify(DEFAULT_LIFTS)), history: [] }
+        }
+    };
+
+    // Helper to get current profile
+    const getActive = () => db.profiles[db.activeId];
+    const saveDb = () => localStorage.setItem('iron531_v6', JSON.stringify(db));
+
+    // LOGIC
+    const WEEKS = [
+        { sets: [0.65, 0.75, 0.85], reps: [5, 5, "5+"] },
+        { sets: [0.70, 0.80, 0.90], reps: [3, 3, "3+"] },
+        { sets: [0.75, 0.85, 0.95], reps: [5, 3, "1+"] },
+        { sets: [0.40, 0.50, 0.60], reps: [5, 5, 5] }
+    ];
+
+    // DOM ELEMENTS
+    const els = {
+        views: { train: document.getElementById('view-train'), settings: document.getElementById('view-settings'), progress: document.getElementById('view-progress') },
+        nav: { train: document.getElementById('nav-train'), settings: document.getElementById('nav-settings'), progress: document.getElementById('nav-progress') },
+        liftSel: document.getElementById('lift-select'),
+        weekSel: document.getElementById('week-select'),
+        profileSel: document.getElementById('profile-select'),
+        setsDiv: document.getElementById('workout-sets'),
+        liftsConfig: document.getElementById('lifts-config'),
+        barLeft: document.getElementById('bar-left'),
+        barRight: document.getElementById('bar-right'),
+        barWeight: document.getElementById('bar-weight'),
+        tmDisplay: document.getElementById('tm-display'),
+        headerProfile: document.getElementById('header-profile-name'),
+        settingsProfile: document.getElementById('settings-profile-name')
+    };
+
+    function init() {
+        // Events
+        els.nav.train.addEventListener('click', () => switchView('train'));
+        els.nav.settings.addEventListener('click', () => switchView('settings'));
+        els.nav.progress.addEventListener('click', () => switchView('progress'));
+        
+        els.liftSel.addEventListener('change', renderWorkout);
+        els.weekSel.addEventListener('change', renderWorkout);
+        els.profileSel.addEventListener('change', switchProfile);
+        
+        document.getElementById('btn-add-lift').addEventListener('click', addLift);
+        document.getElementById('row-add-profile').addEventListener('click', addProfile);
+        document.getElementById('btn-delete-profile').addEventListener('click', deleteProfile);
+        document.getElementById('btn-finish').addEventListener('click', () => location.reload());
+
+        // Initial Render
+        renderProfileSelect();
+        renderSelectors();
+        renderWorkout();
+    }
+
+    function switchView(view) {
+        Object.values(els.views).forEach(el => el.classList.add('hidden'));
+        Object.values(els.nav).forEach(el => el.classList.remove('active'));
+        els.views[view].classList.remove('hidden');
+        els.nav[view].classList.add('active');
+
+        if(view === 'settings') renderSettings();
+        if(view === 'train') renderWorkout();
+    }
+
+    // --- PROFILES ---
+    function renderProfileSelect() {
+        els.profileSel.innerHTML = '';
+        Object.keys(db.profiles).forEach(id => {
+            let opt = document.createElement('option');
+            opt.value = id; 
+            opt.text = db.profiles[id].name;
+            els.profileSel.add(opt);
+        });
+        els.profileSel.value = db.activeId;
+        
+        // Update labels
+        const name = db.profiles[db.activeId].name;
+        els.headerProfile.innerText = name;
+        els.settingsProfile.innerText = name;
+    }
+
+    function switchProfile() {
+        db.activeId = els.profileSel.value;
+        saveDb();
+        renderProfileSelect();
+        renderSelectors();
+        renderSettings(); // Re-render settings for new user
+        renderWorkout(); // Re-render workout
+    }
+
+    function addProfile() {
+        const name = prompt("Enter Name for new profile:");
+        if(!name) return;
+        const id = 'p_' + Date.now();
+        db.profiles[id] = {
+            name: name,
+            lifts: JSON.parse(JSON.stringify(DEFAULT_LIFTS)),
+            history: []
+        };
+        db.activeId = id;
+        saveDb();
+        renderProfileSelect();
+        switchView('settings'); // Go to config for new user
+        renderSettings();
+    }
+
+    function deleteProfile() {
+        if(Object.keys(db.profiles).length <= 1) {
+            alert("Cannot delete the only profile.");
+            return;
+        }
+        if(confirm(`Delete profile "${getActive().name}"? This cannot be undone.`)) {
+            delete db.profiles[db.activeId];
+            db.activeId = Object.keys(db.profiles)[0]; // Switch to first available
+            saveDb();
+            renderProfileSelect();
+            switchProfile();
+        }
+    }
+
+    // --- WORKOUT ---
+    function renderSelectors() {
+        els.liftSel.innerHTML = '';
+        getActive().lifts.forEach(l => {
+            let opt = document.createElement('option');
+            opt.value = l.id; opt.text = l.name;
+            els.liftSel.add(opt);
+        });
+    }
+
+    function renderWorkout() {
+        const lift = getActive().lifts.find(l => l.id === els.liftSel.value);
+        const week = WEEKS[els.weekSel.value];
+        if(!lift) return;
+
+        els.tmDisplay.innerText = `${lift.tm} lbs`;
+        els.setsDiv.innerHTML = '';
+        
+        // Warmup
+        [0.4, 0.5, 0.6].forEach(p => appendSet(Math.round((lift.tm*p)/5)*5, 5, "Warmup", p));
+        
+        // Main
+        week.sets.forEach((p, i) => {
+            const w = Math.round((lift.tm*p)/5)*5;
+            appendSet(w, week.reps[i], `Set ${i+1}`, p, typeof week.reps[i] === 'string');
+        });
+
+        drawBar(Math.round((lift.tm*0.4)/5)*5);
+    }
+
+    function appendSet(weight, reps, label, pct, isAmrap=false) {
+        const div = document.createElement('div');
+        div.className = 'set-row';
+        if(isAmrap) div.style.borderLeft = "4px solid #0a84ff";
+        
+        const pctText = Math.round(pct * 100) + "%";
+
+        div.innerHTML = `
+            <div style="flex:1">
+                <div style="font-size:12px; color:var(--text-sec); font-weight:700; text-transform:uppercase;">
+                    ${label} <span style="color:var(--primary); margin-left:4px;">${pctText}</span>
+                </div>
+                <div style="font-size:18px; font-weight:700;">${weight} <span style="font-size:14px; font-weight:400; color:var(--text-sec);">lbs</span></div>
+            </div>
+            <div style="font-weight:700; margin-right:20px;">${reps}</div>
+            <div class="check"></div>
+        `;
+        
+        div.addEventListener('click', () => {
+            div.classList.toggle('done');
+            drawBar(weight);
+        });
+        
+        els.setsDiv.appendChild(div);
+    }
+
+    function drawBar(weight) {
+        els.barWeight.innerText = weight;
+        els.barLeft.innerHTML = ''; els.barRight.innerHTML = '';
+        let w = (weight - 45) / 2;
+        const plates = [45, 25, 10, 5, 2.5];
+        const classes = ['p-45', 'p-25', 'p-10', 'p-5', 'p-2_5'];
+        
+        plates.forEach((p, i) => {
+            while(w >= p) {
+                els.barLeft.innerHTML += `<div class="plate ${classes[i]}"></div>`;
+                els.barRight.prepend(Object.assign(document.createElement('div'), {className:`plate ${classes[i]}`}));
+                w -= p;
+            }
+        });
+    }
+
+    function renderSettings() {
+        els.liftsConfig.innerHTML = '';
+        getActive().lifts.forEach((l, i) => {
+            const div = document.createElement('div');
+            div.className = 'card row';
+            div.innerHTML = `
+                <input value="${l.name}" onchange="updateLift(${i}, 'name', this.value)" style="text-align:left; flex:1;">
+                <div style="text-align:right;">
+                    <span style="font-size:10px; color:var(--text-sec);">TRUE 1RM</span><br>
+                    <input type="number" value="${l.trueMax}" onchange="updateLift(${i}, 'trueMax', this.value)">
+                </div>
+            `;
+            els.liftsConfig.appendChild(div);
+        });
+    }
+
+    window.updateLift = (i, field, val) => {
+        const active = getActive();
+        if(field === 'trueMax') {
+            active.lifts[i].trueMax = parseFloat(val);
+            active.lifts[i].tm = Math.round((parseFloat(val)*0.9)/5)*5;
+        } else {
+            active.lifts[i][field] = val;
+        }
+        saveDb();
+        renderSelectors();
+    };
+
+    function addLift() {
+        getActive().lifts.push({ id: Date.now().toString(), name: 'New Lift', trueMax: 100, tm: 90 });
+        saveDb();
+        renderSettings();
+    }
+
+    init();
+</script>
+</body>
+</html>

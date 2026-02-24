@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: healthguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://healthguard:healthguard@db:5432/healthguard
+      - REDIS_URL=redis://redis:6379/0
+      - JUDGE_MODEL=${JUDGE_MODEL:-gpt-4o}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - garak_reports:/app/reports
+    networks:
+      - healthguard-net
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: healthguard-worker
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - DATABASE_URL=postgresql://healthguard:healthguard@db:5432/healthguard
+      - REDIS_URL=redis://redis:6379/0
+      - JUDGE_MODEL=${JUDGE_MODEL:-gpt-4o}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    depends_on:
+      - backend
+      - redis
+    volumes:
+      - ./backend:/app
+      - garak_reports:/app/reports
+    networks:
+      - healthguard-net
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: healthguard-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - healthguard-net
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    container_name: healthguard-db
+    environment:
+      - POSTGRES_USER=healthguard
+      - POSTGRES_PASSWORD=healthguard
+      - POSTGRES_DB=healthguard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - healthguard-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: healthguard-redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - healthguard-net
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  garak_reports:
+
+networks:
+  healthguard-net:
+    driver: bridge
