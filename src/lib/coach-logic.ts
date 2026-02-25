@@ -4,7 +4,7 @@ import { estimate1RM } from './iron-logic';
  * AI Coaching Engine v1.1
  * Analyzes training history and current training maxes to suggest optimizations.
  */
-export const analyzeProgress = (history: any[], lifts: any[]) => {
+export const analyzeProgress = (history: WorkoutLog[], lifts: any[]) => {
   const insights: any[] = [];
 
   lifts.forEach(lift => {
@@ -52,6 +52,30 @@ export const analyzeProgress = (history: any[], lifts: any[]) => {
         actionType: 'RESET_TM',
         suggestedTM: Math.round((lift.tm * 0.9) / 5) * 5
       });
+    }
+    
+    // AI INSIGHT: RPE-based Adjustment (New v1.2)
+    const mostRecentRPE = liftLogs[0]?.rpe;
+    if (mostRecentRPE !== undefined && mostRecentRPE !== null) {
+      if (mostRecentRPE <= 6 && liftLogs.length > 2 && bestEst > lift.tm * 1.05) { // Very low RPE for a strong performance
+        insights.push({
+          type: 'RPE_LOW',
+          lift: lift.name,
+          message: `Your last ${lift.name} session felt too easy (RPE ${mostRecentRPE}). Consider a +5lb TM increase. The engine has more capacity.`,
+          actionable: true,
+          actionType: 'RESET_TM',
+          suggestedTM: Math.round((lift.tm + 5) / 5) * 5
+        });
+      } else if (mostRecentRPE >= 9 && liftLogs.length > 2 && bestEst < lift.tm * 0.95) { // Very high RPE for a weaker performance
+        insights.push({
+          type: 'RPE_HIGH',
+          lift: lift.name,
+          message: `Last ${lift.name} session was a grinder (RPE ${mostRecentRPE}). You might be fatigued. Consider an adaptive TM reset.`,
+          actionable: true,
+          actionType: 'RESET_TM',
+          suggestedTM: Math.round((lift.tm * 0.9) / 5) * 5
+        });
+      }
     }
     
     // AI INSIGHT: Consistency & Streaks
