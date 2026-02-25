@@ -101,25 +101,8 @@ const StructuralBalance = ({ history }: { history: CalculatedPR[] }): React.Reac
   );
 };
 
-const ProgressChart = ({ history, liftName, timeRange }: { history: CalculatedPR[], liftName: string, timeRange: '3m' | '6m' | 'all' }) => {
-  const filterHistoryByTimeRange = (data: CalculatedPR[], range: '3m' | '6m' | 'all') => {
-    if (range === 'all') return data;
-
-    const now = new Date();
-    let cutoffDate = new Date();
-
-    if (range === '3m') {
-      cutoffDate.setMonth(now.getMonth() - 3);
-    } else if (range === '6m') {
-      cutoffDate.setMonth(now.getMonth() - 6);
-    }
-
-    return data.filter(d => new Date(d.date) >= cutoffDate);
-  };
-
-  const filteredHistory = filterHistoryByTimeRange(history, timeRange);
-
-  const liftData = filteredHistory
+const ProgressChart = ({ history, liftName }: { history: CalculatedPR[], liftName: string }) => {
+  const liftData = history
     .filter(h => h.lift?.toUpperCase() === liftName?.toUpperCase())
     .reverse();
 
@@ -165,6 +148,23 @@ export const PRTracker = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPR, setSelectedPR] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'3m' | '6m' | 'all'>('all'); // New state for time range
+
+  const filterHistoryByTimeRange = (data: CalculatedPR[], range: '3m' | '6m' | 'all') => {
+    if (range === 'all') return data;
+
+    const now = new Date();
+    let cutoffDate = new Date();
+
+    if (range === '3m') {
+      cutoffDate.setMonth(now.getMonth() - 3);
+    } else if (range === '6m') {
+      cutoffDate.setMonth(now.getMonth() - 6);
+    }
+
+    return data.filter(d => new Date(d.date) >= cutoffDate);
+  };
+
+  const filteredHistory = filterHistoryByTimeRange(fullHistory, timeRange);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -269,7 +269,7 @@ export const PRTracker = () => {
             </div>
           </div>
 
-          <ProgressChart history={filteredHistory} liftName={king.lift} timeRange={timeRange} />
+          <ProgressChart history={filteredHistory} liftName={king.lift} />
 
           <div className="flex justify-center gap-2 mt-4">
             <button 
@@ -364,7 +364,7 @@ export const PRTracker = () => {
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Calculated Peak 1RM (LBS)</div>
             </div>
 
-            <ProgressChart history={fullHistory} liftName={selectedPR.lift} timeRange={timeRange} />
+            <ProgressChart history={fullHistory} liftName={selectedPR.lift} />
           </div>
 
           <div className="flex-1 space-y-6">
