@@ -581,6 +581,7 @@ export const AppContent = () => {
           showSuccess={showSuccess}
           showPR={showPR}
           onResetTM={handleResetTM}
+          restTimer={restTimer}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
