@@ -1,3 +1,4 @@
+import { WorkoutLog } from './types';
 import { estimate1RM } from './iron-logic';
 
 /**
