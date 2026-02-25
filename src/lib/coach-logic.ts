@@ -28,7 +28,7 @@ export const analyzeProgress = (history: WorkoutLog[], lifts: any[]) => {
     const bestEst = liftLogs.reduce((max, log) => {
       // Data from Supabase/LocalStorage might have volume as "1,200" or raw numbers
       const volString = String(log.volume || '0').replace(/,/g, '');
-      const sets = parseInt(log.sets) || 1;
+      const sets = parseInt(String(log.sets)) || 1;
       const avgWeight = parseFloat(volString) / sets;
       const est = estimate1RM.epley(avgWeight, 5);
       return (est > max) ? est : max;
