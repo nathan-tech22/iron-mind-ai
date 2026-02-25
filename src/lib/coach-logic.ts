@@ -56,7 +56,7 @@ export const analyzeProgress = (history: WorkoutLog[], lifts: any[]) => {
     }
     
     // AI INSIGHT: RPE-based Adjustment (New v1.2)
-    const mostRecentRPE = liftLogs[0]?.rpe;
+    const mostRecentRPE = (liftLogs[0] as any)?.rpe;
     if (mostRecentRPE !== undefined && mostRecentRPE !== null) {
       if (mostRecentRPE <= 6 && liftLogs.length > 2 && bestEst > lift.tm * 1.05) { // Very low RPE for a strong performance
         insights.push({
