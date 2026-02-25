@@ -191,12 +191,28 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
                 <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Vibe</label>
                 <select 
                   value={profile.theme}
+                  onChange={(e) => setProfile({...profile, theme: e.target.value})}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-5 text-sm font-black italic outline-none"
                 >
                   <option>FOUNDER BLACK</option>
                   <option>IRON NEON</option>
                 </select>
               </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Notifications</label>
+              <button 
+                onClick={() => setProfile({...profile, notifications: !profile.notifications})}
+                className={`w-full text-left p-5 rounded-2xl border transition-all flex items-center justify-between ${
+                  profile.notifications 
+                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-400' 
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-500'
+                }`}
+              >
+                <span className="text-sm font-bold tracking-tight">{profile.notifications ? 'ENABLED' : 'DISABLED'}</span>
+                {profile.notifications ? <Bell size={20} /> : <BellOff size={20} />}
+              </button>
             </div>
           </div>
 
@@ -252,7 +268,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
       </button>
 
       <div className="mt-8 text-center pb-12">
-        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.7.0</p>
+        <p className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.4em]">Iron-Mind AI v1.7.1</p>
       </div>
     </div>
   );

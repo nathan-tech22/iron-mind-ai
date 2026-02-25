@@ -34,6 +34,7 @@ interface TrainingViewProps {
   showSuccess: boolean;
   showPR: boolean;
   onResetTM: (name: string, tm: number) => void;
+  restTimer: number | null;
 }
 
 const TrainingView = ({ 
@@ -48,7 +49,8 @@ const TrainingView = ({
   logWorkout,
   showSuccess,
   showPR,
-  onResetTM
+  onResetTM,
+  restTimer
 }: TrainingViewProps) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
@@ -273,7 +275,19 @@ export const AppContent = () => {
   const [showAMRAPModal, setShowAMRAPModal] = useState(false);
   const [amrapInput, setAmrapInput] = useState('');
   const [amrapContext, setAmrapContext] = useState<{ weight: number, totalVolume: number } | null>(null);
+  const [restTimer, setRestTimer] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Rest Timer Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (restTimer !== null) {
+      interval = setInterval(() => {
+        setRestTimer(prev => (prev !== null && prev > 0 ? prev - 1 : null));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [restTimer]);
 
   // Load History and Lifts
   useEffect(() => {
@@ -295,7 +309,7 @@ export const AppContent = () => {
             const mappedLifts = liftData.map(l => ({
               id: l.id,
               name: l.name.toUpperCase(),
-              tm: Math.round(l.true_1rm * (l.training_max_pct || 0.9))
+              tm: Math.round(l.training_max)
             }));
             setLifts(mappedLifts);
             setSelectedLift(mappedLifts[0]);

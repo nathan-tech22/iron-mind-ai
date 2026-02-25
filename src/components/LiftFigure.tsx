@@ -2,14 +2,18 @@ import React from 'react';
 
 const SquatFigure = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 100 100" className="w-full h-full">
-    {/* Feet / Lower Leg (Fixed) */}
-    <path d="M35 100 L42 85 M65 100 L58 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-    {/* Moving Upper Body + Bar */}
     <g>
+      {/* Head */}
       <circle cx="50" cy="25" r="8" fill="currentColor" />
-      <path d="M50 33 L50 55 L42 85 M50 55 L58 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Torso */}
+      <path d="M50 33 L50 55" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Hips to Knees (Upper Leg) */}
+      <path d="M50 55 L42 85 M50 55 L58 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Knees to Feet (Lower Leg) - Stays on ground */}
+      <path d="M42 85 L35 100 M58 85 L65 100" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Barbell */}
       <path d="M25 40 L75 40" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
-      {active && <animateTransform attributeName="transform" type="translate" values="0 0; 0 25; 0 0" dur="1.8s" repeatCount="indefinite" />}
+      {active && <animateTransform attributeName="transform" type="translate" values="0 0; 0 20; 0 0" dur="1.8s" repeatCount="indefinite" />}
     </g>
   </svg>
 );
@@ -28,14 +32,15 @@ const BenchFigure = ({ active }: { active: boolean }) => (
 
 const DeadliftFigure = ({ active }: { active: boolean }) => (
   <svg viewBox="0 0 100 100" className="w-full h-full">
-    {/* Feet (Fixed on ground) */}
-    <path d="M40 100 L45 85 M60 100 L55 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
-    
-    {/* Upper Body + Bar (Synced Vertical Move) */}
     <g>
+      {/* Head */}
       <circle cx="50" cy="35" r="8" fill="currentColor" />
-      {/* Torso connected to hips at 85 */}
-      <path d="M50 43 L50 65 L45 85 M50 65 L55 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Torso */}
+      <path d="M50 43 L50 65" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Hips to Knees (Upper Leg) */}
+      <path d="M50 65 L45 85 M50 65 L55 85" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
+      {/* Knees to Feet (Lower Leg) - Stays on ground */}
+      <path d="M45 85 L40 100 M55 85 L60 100" stroke="currentColor" strokeWidth="4" fill="none" strokeLinecap="round" />
       {/* Arms reaching for the bar */}
       <path d="M50 45 L35 75 M50 45 L65 75" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" />
       {/* Barbell */}
@@ -45,7 +50,7 @@ const DeadliftFigure = ({ active }: { active: boolean }) => (
         <animateTransform 
           attributeName="transform" 
           type="translate" 
-          values="0 0; 0 -25; 0 0" 
+          values="0 0; 0 -20; 0 0" 
           dur="2.5s" 
           repeatCount="indefinite" 
         />
