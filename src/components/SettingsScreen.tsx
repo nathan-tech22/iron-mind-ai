@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, User, Bell, Shield, LogOut, ChevronRight, Weight, X, Camera, Palette, Globe } from 'lucide-react';
+import { Settings, User, Bell, BellOff, Shield, LogOut, ChevronRight, Weight, X, Camera, Palette, Globe } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 import { Lift, WorkoutLog, Profile } from '@/lib/types';
