@@ -101,10 +101,26 @@ const StructuralBalance = ({ history }: { history: CalculatedPR[] }): React.Reac
   );
 };
 
-const ProgressChart = ({ history, liftName }: { history: CalculatedPR[], liftName: string }) => {
-  const liftData = history
+const ProgressChart = ({ history, liftName, timeRange }: { history: CalculatedPR[], liftName: string, timeRange: '3m' | '6m' | 'all' }) => {
+  const filterHistoryByTimeRange = (data: CalculatedPR[], range: '3m' | '6m' | 'all') => {
+    if (range === 'all') return data;
+
+    const now = new Date();
+    let cutoffDate = new Date();
+
+    if (range === '3m') {
+      cutoffDate.setMonth(now.getMonth() - 3);
+    } else if (range === '6m') {
+      cutoffDate.setMonth(now.getMonth() - 6);
+    }
+
+    return data.filter(d => new Date(d.date) >= cutoffDate);
+  };
+
+  const filteredHistory = filterHistoryByTimeRange(history, timeRange);
+
+  const liftData = filteredHistory
     .filter(h => h.lift?.toUpperCase() === liftName?.toUpperCase())
-    .slice(0, 7) // Last 7 sessions
     .reverse();
 
   if (liftData.length < 2) return null;
@@ -148,6 +164,7 @@ export const PRTracker = () => {
   const [fullHistory, setFullHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPR, setSelectedPR] = useState<any>(null);
+  const [timeRange, setTimeRange] = useState<'3m' | '6m' | 'all'>('all'); // New state for time range
 
   useEffect(() => {
     const fetchData = async () => {
@@ -252,7 +269,35 @@ export const PRTracker = () => {
             </div>
           </div>
 
-          <ProgressChart history={fullHistory} liftName={king.lift} />
+          <ProgressChart history={filteredHistory} liftName={king.lift} timeRange={timeRange} />
+
+          <div className="flex justify-center gap-2 mt-4">
+            <button 
+              onClick={() => setTimeRange('3m')}
+              className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${
+                timeRange === '3m' ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+              }`}
+            >
+              3 Months
+            </button>
+            <button 
+              onClick={() => setTimeRange('6m')}
+              className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${
+                timeRange === '6m' ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+              }`}
+            >
+              6 Months
+            </button>
+            <button 
+              onClick={() => setTimeRange('all')}
+              className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${
+                timeRange === 'all' ? 'bg-blue-600 text-white' : 'bg-zinc-800 text-zinc-500 hover:bg-zinc-700'
+              }`}
+            >
+              All Time
+            </button>
+          </div>
+
         </div>
       ) : (
         <div className="py-20 text-center border-2 border-dashed border-zinc-900 rounded-[3rem] mb-8">
@@ -319,7 +364,7 @@ export const PRTracker = () => {
               <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Calculated Peak 1RM (LBS)</div>
             </div>
 
-            <ProgressChart history={fullHistory} liftName={selectedPR.lift} />
+            <ProgressChart history={fullHistory} liftName={selectedPR.lift} timeRange={timeRange} />
           </div>
 
           <div className="flex-1 space-y-6">
