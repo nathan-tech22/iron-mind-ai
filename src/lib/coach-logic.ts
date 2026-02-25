@@ -95,8 +95,8 @@ export const analyzeProgress = (history: WorkoutLog[], lifts: any[]) => {
       const currentSession = liftLogs[0];
       const previousCycleSession = liftLogs[4];
 
-      const currentEst = estimate1RM.epley(parseFloat(String(currentSession.volume || '0').replace(/,/g, '')) / (parseInt(currentSession.sets) || 1), 5);
-      const prevEst = estimate1RM.epley(parseFloat(String(previousCycleSession.volume || '0').replace(/,/g, '')) / (parseInt(previousCycleSession.sets) || 1), 5);
+      const currentEst = estimate1RM.epley(parseFloat(String(currentSession.volume || '0').replace(/,/g, '')) / (parseInt(String(currentSession.sets)) || 1), 5);
+      const prevEst = estimate1RM.epley(parseFloat(String(previousCycleSession.volume || '0').replace(/,/g, '')) / (parseInt(String(previousCycleSession.sets)) || 1), 5);
 
       const diff = currentEst - prevEst;
       const pct = ((diff / prevEst) * 100).toFixed(1);
