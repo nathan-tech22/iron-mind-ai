@@ -9,6 +9,7 @@ import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { LiftFigure } from './LiftFigure';
+import { SetRow } from './SetRow';
 
 import { ironVault } from '@/lib/vault-logic';
 
@@ -35,39 +36,43 @@ interface TrainingViewProps {
   showPR: boolean;
   onResetTM: (name: string, tm: number) => void;
   restTimer: number | null;
+  rpeValues: (number | null)[];
+  onRPEChange: (index: number, rpe: number) => void;
 }
 
-const TrainingView = ({ 
-  lifts, 
+const TrainingView = ({
+  lifts,
   history,
-  week, 
-  cycleWeek, 
-  selectedLift, 
-  setSelectedLift, 
-  completedSets, 
+  week,
+  cycleWeek,
+  selectedLift,
+  setSelectedLift,
+  completedSets,
   toggleSet,
   logWorkout,
   showSuccess,
   showPR,
   onResetTM,
-  restTimer
+  restTimer,
+  rpeValues,
+  onRPEChange
 }: TrainingViewProps) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
-  const activeWeight = completedSets.length > 0 
-    ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight 
+  const activeWeight = completedSets.length > 0
+    ? workoutSets[Math.min(completedSets.length, workoutSets.length - 1)].weight
     : workoutSets[0].weight;
 
   // Multi-cycle trend engine visualization
   const getCycleTrend = (liftName: string) => {
     const logs = history.filter(h => h.lift?.toUpperCase() === liftName.toUpperCase());
     if (logs.length < 5) return null;
-    
+
     const currentVol = parseFloat(String(logs[0].volume).replace(/,/g, ''));
     const currentSets = parseInt(String(logs[0].sets)) || 1;
     const prevVol = parseFloat(String(logs[4].volume).replace(/,/g, ''));
     const prevSets = parseInt(String(logs[4].sets)) || 1;
-    
+
     const current = estimate1RM.epley(currentVol / currentSets, 5);
     const prev = estimate1RM.epley(prevVol / prevSets, 5);
     const diff = current - prev;
@@ -89,10 +94,10 @@ const TrainingView = ({
   const getReadiness = (liftName: string) => {
     const liftLogs = history.filter((h: any) => h.lift?.toUpperCase() === liftName.toUpperCase());
     if (liftLogs.length === 0) return 100;
-    
+
     const lastDate = new Date(liftLogs[0].date);
     const diffDays = Math.floor((new Date().getTime() - lastDate.getTime()) / (1000 * 3600 * 24));
-    
+
     // Simple recovery model: 0-24h (20%), 24-48h (60%), 48h+ (100%)
     if (diffDays === 0) return 20;
     if (diffDays === 1) return 60;
@@ -146,9 +151,9 @@ const TrainingView = ({
             <div className="flex-1">
               <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">AI Coaching Intel</div>
               <p className="text-sm font-bold text-zinc-200 leading-tight">{activeInsight.message}</p>
-              
+
               {activeInsight.actionable && activeInsight.actionType === 'RESET_TM' && (
-                <button 
+                <button
                   onClick={() => onResetTM(activeInsight.lift, activeInsight.suggestedTM)}
                   className="mt-3 bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20"
                 >
@@ -168,19 +173,19 @@ const TrainingView = ({
                 key={lift.id}
                 onClick={() => setSelectedLift(lift)}
                 className={`p-4 rounded-2xl border transition-all text-left relative overflow-hidden group ${
-                  selectedLift.id === lift.id 
-                    ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]' 
+                  selectedLift.id === lift.id
+                    ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]'
                     : 'bg-zinc-900 border-zinc-800'
                 }`}
               >
                 {/* Readiness Glow */}
-                <div 
+                <div
                   className={`absolute bottom-0 left-0 h-1 transition-all duration-1000 ${
                     readiness < 50 ? 'bg-amber-500' : 'bg-emerald-500'
                   }`}
                   style={{ width: `${readiness}%`, opacity: selectedLift.id === lift.id ? 1 : 0.3 }}
                 />
-                
+
                 <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
                   selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
                 }`}>
@@ -205,54 +210,33 @@ const TrainingView = ({
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">
             <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Main Sets</h2>
-            <button 
+            <button
               onClick={() => setTmSetting(prev => prev === 90 ? 85 : 90)}
               className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
             >
               {tmSetting}% TM
             </button>
           </div>
-          
+
           {workoutSets.map((set, i) => (
-            <div 
+            <SetRow
               key={i}
-              onClick={() => toggleSet(i)}
-              className={`flex items-center justify-between p-5 rounded-2xl border transition-all duration-300 ${
-                completedSets.includes(i) 
-                  ? 'bg-emerald-500/10 border-emerald-500/40 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]' 
-                  : 'bg-zinc-900 border-zinc-800'
-              }`}
-            >
-              <div className="flex items-center gap-5">
-                <div className={`text-xs font-black w-8 ${completedSets.includes(i) ? 'text-emerald-500' : 'text-zinc-600'}`}>
-                  {set.percentage}%
-                </div>
-                <div className="text-left">
-                  <div className="text-2xl font-black italic tabular-nums">
-                    {set.weight} <span className="text-sm not-italic text-zinc-600 font-bold ml-1">LBS</span>
-                  </div>
-                  <div className={`text-[10px] font-bold uppercase tracking-widest ${completedSets.includes(i) ? 'text-emerald-500/70' : 'text-zinc-600'}`}>
-                    Target: {set.reps} Reps
-                  </div>
-                </div>
-              </div>
-              {completedSets.includes(i) ? (
-                <div className="bg-emerald-500 rounded-full p-1 shadow-lg shadow-emerald-900/20">
-                  <CheckCircle2 className="text-black" size={24} />
-                </div>
-              ) : (
-                <Circle className="text-zinc-800" size={28} />
-              )}
-            </div>
+              set={set}
+              index={i}
+              completedSets={completedSets}
+              toggleSet={toggleSet}
+              rpeValue={rpeValues[i] || null}
+              onRPEChange={onRPEChange}
+            />
           ))}
         </div>
 
-        <button 
+        <button
           onClick={logWorkout}
           disabled={completedSets.length === 0}
           className={`w-full font-black py-5 rounded-2xl shadow-lg italic tracking-widest transition-all mt-6 ${
-            completedSets.length > 0 
-              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500' 
+            completedSets.length > 0
+              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500'
               : 'bg-zinc-900 text-zinc-700 border border-zinc-800 opacity-50'
           }`}
         >
@@ -277,6 +261,43 @@ export const AppContent = () => {
   const [amrapContext, setAmrapContext] = useState<{ weight: number, totalVolume: number } | null>(null);
   const [restTimer, setRestTimer] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rpeValues, setRpeValues] = useState<(number | null)[]>([]);
+  const [showReadinessModal, setShowReadinessModal] = useState(false);
+  const [readinessData, setReadinessData] = useState({
+    sleepQuality: null,
+    stressLevel: null,
+    fatigueLevel: null,
+    overallScore: null,
+  });
+
+  const handleRPEChange = (index: number, rpe: number) => {
+    setRpeValues(prev => {
+      const newRPEs = [...prev];
+      newRPEs[index] = rpe;
+      return newRPEs;
+    });
+  };
+
+  const handleReadinessChange = (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => {
+    setReadinessData(prev => {
+      const newData = { ...prev, [key]: value };
+      const total = (newData.sleepQuality || 0) + (newData.stressLevel || 0) + (newData.fatigueLevel || 0);
+      const count = (newData.sleepQuality ? 1 : 0) + (newData.stressLevel ? 1 : 0) + (newData.fatigueLevel ? 1 : 0);
+      return { ...newData, overallScore: count > 0 ? Math.round(total / count) : null };
+    });
+  };
+
+  const handleSubmitReadiness = () => {
+    // TODO: Implement Supabase and localStorage saving for readiness data
+    console.log('Submitting Readiness:', readinessData);
+    setShowReadinessModal(false);
+  };
+
+  const handleSkipReadiness = () => {
+    // TODO: Implement logic for skipping readiness (e.g., store a "skipped" flag for today)
+    console.log('Skipping Readiness for today.');
+    setShowReadinessModal(false);
+  };
 
   // Rest Timer Logic
   useEffect(() => {
@@ -289,13 +310,185 @@ export const AppContent = () => {
     return () => clearInterval(interval);
   }, [restTimer]);
 
+  const ReadinessCheckModal = ({
+    readinessData,
+    onReadinessChange,
+    onSubmit,
+    onSkip
+  }: {
+    readinessData: {
+      sleepQuality: number | null;
+      stressLevel: number | null;
+      fatigueLevel: number | null;
+      overallScore: number | null;
+    };
+    onReadinessChange: (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => void;
+    onSubmit: () => void;
+    onSkip: () => void;
+  }) => {
+    const InputRow = ({ label, value, onChange }: {
+      label: string;
+      value: number | null;
+      onChange: (v: number) => void;
+    }) => (
+      <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-xl">
+        <label className="text-sm font-medium text-zinc-300">{label}</label>
+        <input
+          type="number"
+          min="1"
+          max="5"
+          value={value === null ? '' : value}
+          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+          className="w-16 bg-zinc-700 text-white text-center rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+          <div className="text-center mb-6">
+            <Sparkles size={40} className="text-blue-500 mx-auto mb-3" />
+            <h2 className="text-2xl font-black italic tracking-tight text-white">Daily Readiness</h2>
+            <p className="text-zinc-500 text-sm mt-1">How are you feeling today?</p>
+          </div>
+
+          <InputRow
+            label="Sleep Quality (1-5)"
+            value={readinessData.sleepQuality}
+            onChange={(v) => onReadinessChange('sleepQuality', v)}
+          />
+          <InputRow
+            label="Stress Level (1-5)"
+            value={readinessData.stressLevel}
+            onChange={(v) => onReadinessChange('stressLevel', v)}
+          />
+          <InputRow
+            label="Fatigue Level (1-5)"
+            value={readinessData.fatigueLevel}
+            onChange={(v) => onReadinessChange('fatigueLevel', v)}
+          />
+
+          <div className="pt-4 text-center">
+            <div className="text-zinc-400 text-sm font-medium mb-2">Overall Readiness Score:</div>
+            <div className="text-5xl font-black italic text-blue-500">
+              {readinessData.overallScore === null ? '-' : readinessData.overallScore}
+            </div>
+          </div>
+
+          <button
+            onClick={onSubmit}
+            disabled={readinessData.overallScore === null}
+            className={`w-full py-4 rounded-xl font-black italic tracking-widest transition-colors ${
+              readinessData.overallScore !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+            }`}
+          >
+            SUBMIT READINESS
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full py-2 text-xs font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400"
+          >
+            SKIP FOR NOW
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const ReadinessCheckModal = ({
+    readinessData,
+    onReadinessChange,
+    onSubmit,
+    onSkip
+  }: {
+    readinessData: {
+      sleepQuality: number | null;
+      stressLevel: number | null;
+      fatigueLevel: number | null;
+      overallScore: number | null;
+    };
+    onReadinessChange: (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => void;
+    onSubmit: () => void;
+    onSkip: () => void;
+  }) => {
+    const InputRow = ({ label, value, onChange }: {
+      label: string;
+      value: number | null;
+      onChange: (v: number) => void;
+    }) => (
+      <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-xl">
+        <label className="text-sm font-medium text-zinc-300">{label}</label>
+        <input
+          type="number"
+          min="1"
+          max="5"
+          value={value === null ? '' : value}
+          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+          className="w-16 bg-zinc-700 text-white text-center rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+          <div className="text-center mb-6">
+            <Sparkles size={40} className="text-blue-500 mx-auto mb-3" />
+            <h2 className="text-2xl font-black italic tracking-tight text-white">Daily Readiness</h2>
+            <p className="text-zinc-500 text-sm mt-1">How are you feeling today?</p>
+          </div>
+
+          <InputRow
+            label="Sleep Quality (1-5)"
+            value={readinessData.sleepQuality}
+            onChange={(v) => onReadinessChange('sleepQuality', v)}
+          />
+          <InputRow
+            label="Stress Level (1-5)"
+            value={readinessData.stressLevel}
+            onChange={(v) => onReadinessChange('stressLevel', v)}
+          />
+          <InputRow
+            label="Fatigue Level (1-5)"
+            value={readinessData.fatigueLevel}
+            onChange={(v) => onReadinessChange('fatigueLevel', v)}
+          />
+
+          <div className="pt-4 text-center">
+            <div className="text-zinc-400 text-sm font-medium mb-2">Overall Readiness Score:</div>
+            <div className="text-5xl font-black italic text-blue-500">
+              {readinessData.overallScore === null ? '-' : readinessData.overallScore}
+            </div>
+          </div>
+
+          <button
+            onClick={onSubmit}
+            disabled={readinessData.overallScore === null}
+            className={`w-full py-4 rounded-xl font-black italic tracking-widest transition-colors ${
+              readinessData.overallScore !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+            }`}
+          >
+            SUBMIT READINESS
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full py-2 text-xs font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400"
+          >
+            SKIP FOR NOW
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   // Load History and Lifts
   useEffect(() => {
     const initializeData = async () => {
       try {
         setLoading(true);
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (user && user.id !== 'demo-user') {
           // 1. Fetch Lifts
           const { data: liftData, error: liftError } = await supabase
@@ -329,7 +522,8 @@ export const AppContent = () => {
               date: new Date(w.workout_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
               lift: w.lifts.name.toUpperCase(),
               sets: 1, // Database stores individual sets usually, UI currently groups
-              volume: (w.weight_used * w.reps_completed).toLocaleString()
+              volume: (w.weight_used * w.reps_completed).toLocaleString(),
+              // rpe is not currently in the history fetch, need to add if exists
             }));
             setHistory(mappedHistory);
           }
@@ -343,6 +537,13 @@ export const AppContent = () => {
           }
           const savedHistory = localStorage.getItem('iron-mind-history');
           if (savedHistory) setHistory(JSON.parse(savedHistory));
+
+          // Check local storage for readiness
+          const today = new Date().toLocaleDateString();
+          const lastReadinessDate = localStorage.getItem('iron-mind-last-readiness-date');
+          if (lastReadinessDate !== today) {
+            setShowReadinessModal(true);
+          }
         }
       } catch (err) {
         console.error('Data initialization failed:', err);
@@ -367,7 +568,7 @@ export const AppContent = () => {
             ...l,
             tm: l.tm + (l.name === 'SQUAT' || l.name === 'DEADLIFT' ? 10 : 5)
           }));
-          
+
           setLifts(nextLifts);
           localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
 
@@ -387,7 +588,7 @@ export const AppContent = () => {
               const { error } = await supabase
                 .from('lifts')
                 .upsert(updates, { onConflict: 'id' });
-              
+
               if (error) throw error;
             }
           } catch (e) {
@@ -431,18 +632,18 @@ export const AppContent = () => {
   };
 
   const toggleSet = (index: number) => {
-    setCompletedSets(prev => 
+    setCompletedSets(prev =>
       prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
   };
 
   const handleResetTM = async (liftName: string, newTM: number) => {
     if (!window.confirm(`Apply adaptive reset to ${liftName} (${newTM} lbs)?`)) return;
-    
-    const nextLifts = lifts.map((l: any) => 
+
+    const nextLifts = lifts.map((l: any) =>
       l.name.toUpperCase() === liftName.toUpperCase() ? { ...l, tm: newTM } : l
     );
-    
+
     setLifts(nextLifts);
     localStorage.setItem('iron-mind-lifts', JSON.stringify(nextLifts));
 
@@ -460,14 +661,14 @@ export const AppContent = () => {
 
   const logWorkout = async () => {
     if (completedSets.length === 0) return;
-    
+
     const workoutSets = calculateWorkout(selectedLift.tm, week);
     const totalVolume = completedSets.reduce((acc, idx) => acc + workoutSets[idx].weight, 0);
-    
+
     const lastSetIdx = completedSets[completedSets.length - 1];
     const targetRepsStr = workoutSets[lastSetIdx].reps;
     const weightUsed = workoutSets[lastSetIdx].weight;
-    
+
     if (targetRepsStr.includes('+')) {
       setAmrapContext({ weight: weightUsed, totalVolume });
       setAmrapInput(targetRepsStr.replace('+', ''));
@@ -479,13 +680,16 @@ export const AppContent = () => {
   };
 
   const submitWorkout = async (actualReps: number, weightUsed: number, totalVolume: number) => {
+    const lastSetRPE = rpeValues[completedSets[completedSets.length - 1]];
+
     const newLog: WorkoutLog = {
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       lift: selectedLift.name,
       sets: completedSets.length,
-      volume: totalVolume.toLocaleString()
+      volume: totalVolume.toLocaleString(),
+      rpe: lastSetRPE,
     };
-    
+
     // Live Supabase Sync
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -495,9 +699,10 @@ export const AppContent = () => {
           lift_id: selectedLift.id,
           weight_used: weightUsed,
           reps_completed: actualReps,
-          workout_date: new Date().toISOString()
+          workout_date: new Date().toISOString(),
+          rpe: lastSetRPE,
         });
-        
+
         if (error) {
           ironVault.queueWorkout({
             lift_id: selectedLift.id,
@@ -568,7 +773,7 @@ export const AppContent = () => {
   return (
     <div className="min-h-screen bg-black text-white pb-32">
       {activeTab === 'train' && (
-        <TrainingView 
+        <TrainingView
           lifts={lifts}
           history={history}
           week={week}
@@ -582,11 +787,31 @@ export const AppContent = () => {
           showPR={showPR}
           onResetTM={handleResetTM}
           restTimer={restTimer}
+          rpeValues={rpeValues}
+          onRPEChange={handleRPEChange}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} />}
+
+      {showReadinessModal && (
+        <ReadinessCheckModal
+          readinessData={readinessData}
+          onReadinessChange={handleReadinessChange}
+          onSubmit={handleSubmitReadiness}
+          onSkip={handleSkipReadiness}
+        />
+      )}
+
+      {showReadinessModal && (
+        <ReadinessCheckModal
+          readinessData={readinessData}
+          onReadinessChange={handleReadinessChange}
+          onSubmit={handleSubmitReadiness}
+          onSkip={handleSkipReadiness}
+        />
+      )}
 
       {/* High-Fidelity AMRAP Modal */}
       {showAMRAPModal && (
@@ -604,8 +829,8 @@ export const AppContent = () => {
 
             <div className="space-y-6">
               <div className="text-center">
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={amrapInput}
                   onChange={(e) => setAmrapInput(e.target.value)}
                   autoFocus
@@ -614,14 +839,14 @@ export const AppContent = () => {
                 />
               </div>
 
-              <button 
+              <button
                 onClick={() => amrapContext && submitWorkout(parseInt(amrapInput || '0'), amrapContext.weight, amrapContext.totalVolume)}
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black italic tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30"
               >
                 SAVE PERFORMANCE
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setShowAMRAPModal(false)}
                 className="w-full py-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-zinc-400"
               >
@@ -631,7 +856,7 @@ export const AppContent = () => {
           </div>
         </div>
       )}
-      
+
       <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
         <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <Dumbbell size={22} strokeWidth={2.5} />
