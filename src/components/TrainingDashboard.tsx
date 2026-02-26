@@ -25,6 +25,7 @@ const initialLiftsData: Lift[] = [
 interface TrainingViewProps {
   lifts: Lift[];
   history: WorkoutLog[];
+  dailyReadiness: DailyReadiness | null; // New prop
   week: number;
   cycleWeek: (dir: number) => void;
   selectedLift: Lift;
@@ -55,7 +56,8 @@ const TrainingView = ({
   onResetTM,
   restTimer,
   rpeValues,
-  onRPEChange
+  onRPEChange,
+  dailyReadiness // New prop
 }: TrainingViewProps) => {
   const [tmSetting, setTmSetting] = useState(90); // Default 90%
   const workoutSets = calculateWorkout(selectedLift.tm, week, tmSetting);
@@ -79,7 +81,7 @@ const TrainingView = ({
     return { pct: ((diff / prev) * 100).toFixed(1), up: diff >= 0 };
   };
 
-  const insights = analyzeProgress(history, lifts);
+  const insights = analyzeProgress(history, lifts, dailyReadiness);
   const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
 
   // Get current PR for the selected lift
@@ -825,6 +827,7 @@ export const AppContent = () => {
         <TrainingView
           lifts={lifts}
           history={history}
+          dailyReadiness={readinessData} // Pass readinessData
           week={week}
           cycleWeek={cycleWeek}
           selectedLift={selectedLift}

@@ -1,12 +1,22 @@
-import { WorkoutLog } from './types';
+import { WorkoutLog, DailyReadiness } from './types';
 import { estimate1RM } from './iron-logic';
 
 /**
  * AI Coaching Engine v1.1
  * Analyzes training history and current training maxes to suggest optimizations.
  */
-export const analyzeProgress = (history: WorkoutLog[], lifts: any[]) => {
+export const analyzeProgress = (history: WorkoutLog[], lifts: any[], dailyReadiness: DailyReadiness | null) => {
   const insights: any[] = [];
+
+  // AI INSIGHT: Daily Readiness (New v1.3)
+  if (dailyReadiness && dailyReadiness.overall_score !== null && dailyReadiness.overall_score <= 2) {
+    insights.push({
+      type: 'READINESS_LOW',
+      lift: 'GENERAL',
+      message: `Your overall readiness score (${dailyReadiness.overall_score}/5) is low today. Consider reducing intensity, focusing on active recovery, or taking a rest day.`,
+      actionable: false
+    });
+  }
 
   lifts.forEach(lift => {
     // History entries can have lift names as "SQUAT" or "Squat", unify them
