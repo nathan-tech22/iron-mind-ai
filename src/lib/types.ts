@@ -10,6 +10,7 @@ export interface WorkoutLog {
   sets: number | string;
   volume: string;
   intensity?: number;
+  rpe?: number | null;
 }
 
 export interface CalculatedPR {
@@ -24,6 +25,14 @@ export interface Profile {
   theme: string;
   units: string;
   notifications: boolean;
+}
+
+export interface DailyReadiness {
+  date: string;
+  sleep_quality: number;
+  stress_level: number;
+  fatigue_level: number;
+  overall_score: number;
 }
 
 export interface CalculatedPR {
