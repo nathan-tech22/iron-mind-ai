@@ -287,8 +287,30 @@ export const AppContent = () => {
     });
   };
 
-  const handleSubmitReadiness = () => {
-    // TODO: Implement Supabase and localStorage saving for readiness data
+  const handleSubmitReadiness = async () => {
+    const today = new Date().toLocaleDateString();
+    // Save to Supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user && user.id !== 'demo-user') {
+        const { error } = await supabase.from('daily_readiness').insert({
+          user_id: user.id,
+          date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+          sleep_quality: readinessData.sleepQuality,
+          stress_level: readinessData.stressLevel,
+          fatigue_level: readinessData.fatigueLevel,
+          overall_score: readinessData.overallScore,
+        });
+        if (error) throw error;
+      }
+    } catch (e) {
+      console.error('Supabase readiness sync failed:', e);
+    }
+
+    // Save to localStorage (always, for quick check and fallback)
+    localStorage.setItem('iron-mind-last-readiness-date', today);
+    localStorage.setItem('iron-mind-readiness-data', JSON.stringify(readinessData));
+    
     console.log('Submitting Readiness:', readinessData);
     setShowReadinessModal(false);
   };
@@ -527,8 +549,35 @@ export const AppContent = () => {
             }));
             setHistory(mappedHistory);
           }
+
+          // 3. Fetch Daily Readiness for logged-in user
+          const todayDateString = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+          const { data: readinessEntry, error: readinessError } = await supabase
+            .from('daily_readiness')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('date', todayDateString)
+            .single();
+          
+          if (readinessError && readinessError.code !== 'PGRST116') throw readinessError; // PGRST116 is 'no rows found'
+
+          if (readinessEntry) {
+            setReadinessData({
+              sleepQuality: readinessEntry.sleep_quality,
+              stressLevel: readinessEntry.stress_level,
+              fatigueLevel: readinessEntry.fatigue_level,
+              overallScore: readinessEntry.overall_score,
+            });
+            setShowReadinessModal(false);
+          } else {
+            // If no Supabase entry for today, check local storage as a fallback to trigger modal
+            const lastReadinessDate = localStorage.getItem('iron-mind-last-readiness-date');
+            if (lastReadinessDate !== new Date().toLocaleDateString()) {
+              setShowReadinessModal(true);
+            }
+          }
         } else {
-          // Local Fallback
+          // Local Fallback (for non-logged-in users)
           const savedLifts = localStorage.getItem('iron-mind-lifts');
           if (savedLifts) {
             const parsedLifts = JSON.parse(savedLifts);
@@ -538,7 +587,7 @@ export const AppContent = () => {
           const savedHistory = localStorage.getItem('iron-mind-history');
           if (savedHistory) setHistory(JSON.parse(savedHistory));
 
-          // Check local storage for readiness
+          // Check local storage for readiness for local fallback users
           const today = new Date().toLocaleDateString();
           const lastReadinessDate = localStorage.getItem('iron-mind-last-readiness-date');
           if (lastReadinessDate !== today) {
@@ -794,15 +843,6 @@ export const AppContent = () => {
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} />}
-
-      {showReadinessModal && (
-        <ReadinessCheckModal
-          readinessData={readinessData}
-          onReadinessChange={handleReadinessChange}
-          onSubmit={handleSubmitReadiness}
-          onSkip={handleSkipReadiness}
-        />
-      )}
 
       {showReadinessModal && (
         <ReadinessCheckModal
