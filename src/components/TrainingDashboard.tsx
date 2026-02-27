@@ -267,11 +267,12 @@ export const AppContent = () => {
   const [loading, setLoading] = useState(true);
   const [rpeValues, setRpeValues] = useState<(number | null)[]>([]);
   const [showReadinessModal, setShowReadinessModal] = useState(false);
-  const [readinessData, setReadinessData] = useState({
-    sleepQuality: null,
-    stressLevel: null,
-    fatigueLevel: null,
-    overallScore: null,
+  const [readinessData, setReadinessData] = useState<DailyReadiness>({
+    sleep_quality: null,
+    stress_level: null,
+    fatigue_level: null,
+    overall_score: null,
+    date: new Date().toISOString().split('T')[0], // Initialize with today's date
   });
 
   const handleRPEChange = (index: number, rpe: number) => {
@@ -282,12 +283,12 @@ export const AppContent = () => {
     });
   };
 
-  const handleReadinessChange = (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => {
+  const handleReadinessChange = (key: 'sleep_quality' | 'stress_level' | 'fatigue_level', value: number) => {
     setReadinessData(prev => {
       const newData = { ...prev, [key]: value };
-      const total = (newData.sleepQuality || 0) + (newData.stressLevel || 0) + (newData.fatigueLevel || 0);
-      const count = (newData.sleepQuality ? 1 : 0) + (newData.stressLevel ? 1 : 0) + (newData.fatigueLevel ? 1 : 0);
-      return { ...newData, overallScore: count > 0 ? Math.round(total / count) : null };
+      const total = (newData.sleep_quality || 0) + (newData.stress_level || 0) + (newData.fatigue_level || 0);
+      const count = (newData.sleep_quality ? 1 : 0) + (newData.stress_level ? 1 : 0) + (newData.fatigue_level ? 1 : 0);
+      return { ...newData, overall_score: count > 0 ? Math.round(total / count) : null };
     });
   };
 
@@ -300,10 +301,10 @@ export const AppContent = () => {
         const { error } = await supabase.from('daily_readiness').insert({
           user_id: user.id,
           date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-          sleep_quality: readinessData.sleepQuality,
-          stress_level: readinessData.stressLevel,
-          fatigue_level: readinessData.fatigueLevel,
-          overall_score: readinessData.overallScore,
+          sleep_quality: readinessData.sleep_quality,
+          stress_level: readinessData.stress_level,
+          fatigue_level: readinessData.fatigue_level,
+          overall_score: readinessData.overall_score,
         });
         if (error) throw error;
       }
@@ -336,19 +337,14 @@ export const AppContent = () => {
     return () => clearInterval(interval);
   }, [restTimer]);
 
-  const ReadinessCheckModal = ({ // This is the ONLY definition of ReadinessCheckModal
+  const ReadinessCheckModal = ({
     readinessData,
     onReadinessChange,
     onSubmit,
     onSkip
   }: {
-    readinessData: {
-      sleepQuality: number | null;
-      stressLevel: number | null;
-      fatigueLevel: number | null;
-      overallScore: number | null;
-    };
-    onReadinessChange: (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => void;
+    readinessData: DailyReadiness;
+    onReadinessChange: (key: 'sleep_quality' | 'stress_level' | 'fatigue_level', value: number) => void;
     onSubmit: () => void;
     onSkip: () => void;
   }) => {
@@ -382,32 +378,32 @@ export const AppContent = () => {
 
           <InputRow
             label="Sleep Quality (1-5)"
-            value={readinessData.sleepQuality}
-            onChange={(v) => onReadinessChange('sleepQuality', v)}
+            value={readinessData.sleep_quality}
+            onChange={(v) => onReadinessChange('sleep_quality', v)}
           />
           <InputRow
             label="Stress Level (1-5)"
-            value={readinessData.stressLevel}
-            onChange={(v) => onReadinessChange('stressLevel', v)}
+            value={readinessData.stress_level}
+            onChange={(v) => onReadinessChange('stress_level', v)}
           />
           <InputRow
             label="Fatigue Level (1-5)"
-            value={readinessData.fatigueLevel}
-            onChange={(v) => onReadinessChange('fatigueLevel', v)}
+            value={readinessData.fatigue_level}
+            onChange={(v) => onReadinessChange('fatigue_level', v)}
           />
 
           <div className="pt-4 text-center">
             <div className="text-zinc-400 text-sm font-medium mb-2">Overall Readiness Score:</div>
             <div className="text-5xl font-black italic text-blue-500">
-              {readinessData.overallScore === null ? '-' : readinessData.overallScore}
+              {readinessData.overall_score === null ? '-' : readinessData.overall_score}
             </div>
           </div>
 
           <button
             onClick={onSubmit}
-            disabled={readinessData.overallScore === null}
+            disabled={readinessData.overall_score === null}
             className={`w-full py-4 rounded-xl font-black italic tracking-widest transition-colors ${
-              readinessData.overallScore !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+              readinessData.overall_score !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
             }`}
           >
             SUBMIT READINESS
@@ -499,10 +495,11 @@ export const AppContent = () => {
 
           if (readinessEntry) {
             setReadinessData({
-              sleepQuality: readinessEntry.sleep_quality,
-              stressLevel: readinessEntry.stress_level,
-              fatigueLevel: readinessEntry.fatigue_level,
-              overallScore: readinessEntry.overall_score,
+              sleep_quality: readinessEntry.sleep_quality,
+              stress_level: readinessEntry.stress_level,
+              fatigue_level: readinessEntry.fatigue_level,
+              overall_score: readinessEntry.overall_score,
+              date: readinessEntry.date,
             });
             setShowReadinessModal(false);
           } else {
@@ -510,6 +507,17 @@ export const AppContent = () => {
             const lastReadinessDate = localStorage.getItem('iron-mind-last-readiness-date');
             if (lastReadinessDate !== new Date().toLocaleDateString()) {
               setShowReadinessModal(true);
+            }
+            const localReadinessData = localStorage.getItem('iron-mind-readiness-data');
+            if (localReadinessData) {
+              const parsedLocal = JSON.parse(localReadinessData);
+              setReadinessData(prev => ({
+                ...prev,
+                sleep_quality: parsedLocal.sleepQuality, // map camelCase from old local storage to snake_case
+                stress_level: parsedLocal.stressLevel,
+                fatigue_level: parsedLocal.fatigueLevel,
+                overall_score: parsedLocal.overallScore,
+              }));
             }
           }
         } else {
@@ -528,6 +536,17 @@ export const AppContent = () => {
           const lastReadinessDate = localStorage.getItem('iron-mind-last-readiness-date');
           if (lastReadinessDate !== today) {
             setShowReadinessModal(true);
+            const localReadinessData = localStorage.getItem('iron-mind-readiness-data');
+            if (localReadinessData) {
+              const parsedLocal = JSON.parse(localReadinessData);
+              setReadinessData(prev => ({
+                ...prev,
+                sleep_quality: parsedLocal.sleepQuality, // map camelCase from old local storage to snake_case
+                stress_level: parsedLocal.stressLevel,
+                fatigue_level: parsedLocal.fatigueLevel,
+                overall_score: parsedLocal.overallScore,
+              }));
+            }
           }
         }
       } catch (err) {
@@ -774,7 +793,7 @@ export const AppContent = () => {
           onResetTM={handleResetTM}
           restTimer={restTimer}
           rpeValues={rpeValues}
-          onRPEChange={handleRPEChange}
+          onRPEChange={onRPEChange}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
