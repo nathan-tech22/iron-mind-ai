@@ -29,10 +29,10 @@ export interface Profile {
 
 export interface DailyReadiness {
   date: string;
-  sleep_quality: number;
-  stress_level: number;
-  fatigue_level: number;
-  overall_score: number;
+  sleep_quality: number | null;
+  stress_level: number | null;
+  fatigue_level: number | null;
+  overall_score: number | null;
 }
 
 export interface Achievement {
