@@ -112,35 +112,35 @@ const TrainingView = ({
 
   return (
     <div className={`flex flex-col min-h-screen transition-colors duration-1000 pb-32 font-sans text-center md:text-left relative overflow-hidden ${
-      isHighIntensity ? 'bg-[#050505]' : 'bg-black'
+      isHighIntensity ? 'bg-[var(--color-card-bg)]' : 'bg-[var(--color-background)]'
     }`}>
       {isHighIntensity && (
-        <div className="absolute inset-0 bg-blue-900/5 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 bg-[var(--color-primary)]/5 animate-pulse pointer-events-none" />
       )}
       {showSuccess && (
-        <div className="fixed inset-0 z-[300] bg-blue-600 flex items-center justify-center animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[300] bg-[var(--color-primary)] flex items-center justify-center animate-in fade-in zoom-in duration-300">
            <div className="text-center">
               {showPR ? (
-                <Sparkles size={120} className="text-white mx-auto mb-4 animate-bounce" strokeWidth={3} />
+                <Sparkles size={120} className="text-[var(--color-text)] mx-auto mb-4 animate-bounce" strokeWidth={3} />
               ) : (
-                <CheckCircle2 size={120} className="text-white mx-auto mb-4" strokeWidth={3} />
+                <CheckCircle2 size={120} className="text-[var(--color-text)] mx-auto mb-4" strokeWidth={3} />
               )}
-              <h2 className="text-4xl font-black italic text-white tracking-tighter">
+              <h2 className="text-4xl font-black italic text-[var(--color-text)] tracking-tighter">
                 {showPR ? 'NEW RECORD' : 'IRON SAVED'}
               </h2>
            </div>
         </div>
       )}
       <header className="p-6 pt-12 flex justify-between items-center max-w-2xl mx-auto w-full">
-        <h1 className="text-2xl font-black tracking-tighter italic text-blue-500">
-          IRON-MIND <span className="text-white">AI</span>
+        <h1 className="text-2xl font-black tracking-tighter italic text-[var(--color-primary)]">
+          IRON-MIND <span className="text-[var(--color-text)]">AI</span>
         </h1>
-        <div className="flex items-center gap-4 bg-zinc-900 px-4 py-2 rounded-full border border-zinc-800">
-          <button onClick={() => cycleWeek(-1)}><ChevronLeft size={20} className="text-zinc-500" /></button>
+        <div className="flex items-center gap-4 bg-[var(--color-card-bg)] px-4 py-2 rounded-full border border-[var(--color-border)]">
+          <button onClick={() => cycleWeek(-1)}><ChevronLeft size={20} className="text-[var(--color-text-muted)]" /></button>
           <span className="text-[10px] font-black uppercase tracking-widest w-16 text-center">
             {week === 4 ? 'Deload' : `Week ${week}`}
           </span>
-          <button onClick={() => cycleWeek(1)}><ChevronRight size={20} className="text-zinc-500" /></button>
+          <button onClick={() => cycleWeek(1)}><ChevronRight size={20} className="text-[var(--color-text-muted)]" /></button>
         </div>
       </header>
 
@@ -148,18 +148,18 @@ const TrainingView = ({
         <VisualBarbell weight={activeWeight} pr={currentPR} />
 
         {activeInsight && (
-          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500 relative overflow-hidden group">
-            <div className="bg-blue-600 p-2 rounded-xl mt-1">
-              <Sparkles size={18} className="text-white" />
+          <div className="bg-[var(--color-primary)]/10 border border-[var(--color-secondary)]/30 rounded-2xl p-4 flex items-start gap-4 text-left animate-in slide-in-from-top duration-500 relative overflow-hidden group">
+            <div className="bg-[var(--color-primary)] p-2 rounded-xl mt-1">
+              <Sparkles size={18} className="text-[var(--color-text)]" />
             </div>
             <div className="flex-1">
-              <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 italic">AI Coaching Intel</div>
-              <p className="text-sm font-bold text-zinc-200 leading-tight">{activeInsight.message}</p>
+              <div className="text-[10px] font-black text-[var(--color-secondary)] uppercase tracking-widest mb-1 italic">AI Coaching Intel</div>
+              <p className="text-sm font-bold text-[var(--color-text)] leading-tight">{activeInsight.message}</p>
 
               {activeInsight.actionable && activeInsight.actionType === 'RESET_TM' && (
                 <button
                   onClick={() => onResetTM(activeInsight.lift, activeInsight.suggestedTM)}
-                  className="mt-3 bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20"
+                  className="mt-3 bg-[var(--color-primary)] text-[var(--color-text)] text-[10px] font-black px-4 py-2 rounded-lg uppercase tracking-widest hover:bg-[var(--color-secondary)] transition-all shadow-lg shadow-[var(--color-primary)]/20"
                 >
                   Apply {activeInsight.suggestedTM}lb Reset
                 </button>
@@ -178,20 +178,20 @@ const TrainingView = ({
                 onClick={() => setSelectedLift(lift)}
                 className={`p-4 rounded-2xl border transition-all text-left relative overflow-hidden group ${
                   selectedLift.id === lift.id
-                    ? 'bg-blue-600 border-blue-400 shadow-[0_0_20px_rgba(37,99,235,0.2)]'
-                    : 'bg-zinc-900 border-zinc-800'
+                    ? 'bg-[var(--color-primary)] border-[var(--color-secondary)] shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.2)]'
+                    : 'bg-[var(--color-card-bg)] border-[var(--color-border)]'
                 }`}
               >
                 {/* Readiness Glow */}
                 <div
                   className={`absolute bottom-0 left-0 h-1 transition-all duration-1000 ${
-                    readiness < 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                    readiness < 50 ? 'bg-[var(--color-warning)]' : 'bg-[var(--color-success)]'
                   }`}
                   style={{ width: `${readiness}%`, opacity: selectedLift.id === lift.id ? 1 : 0.3 }}
                 />
 
                 <div className={`text-[9px] font-black uppercase tracking-[0.2em] mb-1 ${
-                  selectedLift.id === lift.id ? 'text-blue-100' : 'text-zinc-500'
+                  selectedLift.id === lift.id ? 'text-[var(--color-text)]' : 'text-[var(--color-text-muted)]'
                 }`}>
                   {lift.name}
                 </div>
@@ -199,7 +199,7 @@ const TrainingView = ({
                   <div className="flex flex-col">
                     <div className="text-xl font-black italic">{lift.tm} TM</div>
                     {trend && (
-                      <div className={`text-[8px] font-black italic ${trend.up ? 'text-emerald-500' : 'text-amber-500'}`}>
+                      <div className={`text-[8px] font-black italic ${trend.up ? 'text-[var(--color-success)]' : 'text-[var(--color-warning)]'}`}>
                         {trend.up ? '+' : ''}{trend.pct}% CoC
                       </div>
                     )}
@@ -213,10 +213,10 @@ const TrainingView = ({
 
         <div className="space-y-3">
           <div className="flex justify-between items-end px-1">
-            <h2 className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Main Sets</h2>
+            <h2 className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-[0.2em]">Main Sets</h2>
             <button
               onClick={() => setTmSetting(prev => prev === 90 ? 85 : 90)}
-              className="text-[10px] font-bold text-blue-500 uppercase tracking-widest hover:text-blue-400 transition-colors"
+              className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest hover:text-[var(--color-secondary)] transition-colors"
             >
               {tmSetting}% TM
             </button>
@@ -241,8 +241,8 @@ const TrainingView = ({
           disabled={completedSets.length === 0}
           className={`w-full font-black py-5 rounded-2xl shadow-lg italic tracking-widest transition-all mt-6 ${
             completedSets.length > 0
-              ? 'bg-blue-600 text-white shadow-blue-900/30 hover:bg-blue-500'
-              : 'bg-zinc-900 text-zinc-700 border border-zinc-800 opacity-50'
+              ? 'bg-[var(--color-primary)] text-[var(--color-text)] shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-secondary)]'
+              : 'bg-[var(--color-card-bg)] text-[var(--color-text-muted)] border border-[var(--color-border)] opacity-50'
           }`}
         >
           LOG SESSION
@@ -403,27 +403,27 @@ export const AppContent = () => {
       value: number | null;
       onChange: (v: number) => void;
     }) => (
-      <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-xl">
-        <label className="text-sm font-medium text-zinc-300">{label}</label>
+      <div className="flex items-center justify-between p-3 bg-[var(--color-card-bg)] rounded-xl">
+        <label className="text-sm font-medium text-[var(--color-text-muted)]">{label}</label>
         <input
           type="number"
           min="1"
           max="5"
           value={value === null ? '' : value}
           onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-          className="w-16 bg-zinc-700 text-white text-center rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          className="w-16 bg-[var(--color-border)] text-[var(--color-text)] text-center rounded-lg p-2 text-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
           placeholder="-"
         />
       </div>
     );
 
     return (
-      <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
-        <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+      <div className="fixed inset-0 z-[400] bg-[var(--color-background)]/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
           <div className="text-center mb-6">
-            <Sparkles size={40} className="text-blue-500 mx-auto mb-3" />
-            <h2 className="text-2xl font-black italic tracking-tight text-white">Daily Readiness</h2>
-            <p className="text-zinc-500 text-sm mt-1">How are you feeling today?</p>
+            <Sparkles size={40} className="text-[var(--color-primary)] mx-auto mb-3" />
+            <h2 className="text-2xl font-black italic tracking-tight text-[var(--color-text)]">Daily Readiness</h2>
+            <p className="text-[var(--color-text-muted)] text-sm mt-1">How are you feeling today?</p>
           </div>
 
           <InputRow
@@ -443,8 +443,8 @@ export const AppContent = () => {
           />
 
           <div className="pt-4 text-center">
-            <div className="text-zinc-400 text-sm font-medium mb-2">Overall Readiness Score:</div>
-            <div className="text-5xl font-black italic text-blue-500">
+            <div className="text-[var(--color-text-muted)] text-sm font-medium mb-2">Overall Readiness Score:</div>
+            <div className="text-5xl font-black italic text-[var(--color-primary)]">
               {readinessData.overall_score === null ? '-' : readinessData.overall_score}
             </div>
           </div>
@@ -453,14 +453,14 @@ export const AppContent = () => {
             onClick={onSubmit}
             disabled={readinessData.overall_score === null}
             className={`w-full py-4 rounded-xl font-black italic tracking-widest transition-colors ${
-              readinessData.overall_score !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+              readinessData.overall_score !== null ? 'bg-[var(--color-primary)] text-[var(--color-text)]' : 'bg-[var(--color-border)] text-[var(--color-text-muted)] cursor-not-allowed'
             }`}
           >
             SUBMIT READINESS
           </button>
           <button
             onClick={onSkip}
-            className="w-full py-2 text-xs font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400"
+            className="w-full py-2 text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
           >
             SKIP FOR NOW
           </button>
@@ -841,17 +841,17 @@ export const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500 italic">Synchronizing Iron...</p>
+          <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--color-text-muted)] italic">Synchronizing Iron...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-black text-white pb-32 ${theme.toLowerCase().replace(/\s/g, '-')}`}>
+    <div className={`min-h-screen bg-[var(--color-background)] text-[var(--color-text)] pb-32 ${theme.toLowerCase().replace(/\s/g, '-')}`}>
       {activeTab === 'train' && (
         <TrainingView
           lifts={lifts}
@@ -888,14 +888,14 @@ export const AppContent = () => {
 
       {/* High-Fidelity AMRAP Modal */}
       {showAMRAPModal && (
-        <div className="fixed inset-0 z-[250] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
-          <div className="w-full max-w-xs bg-zinc-900 border border-zinc-800 rounded-[2.5rem] p-8 shadow-2xl">
+        <div className="fixed inset-0 z-[250] bg-[var(--color-background)]/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-in fade-in duration-300">
+          <div className="w-full max-w-xs bg-[var(--color-card-bg)] border border-[var(--color-border)] rounded-[2.5rem] p-8 shadow-2xl">
             <div className="mb-8 text-center">
-              <div className="bg-blue-600 w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-900/40">
-                <Dumbbell size={32} className="text-white" />
+              <div className="bg-[var(--color-primary)] w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-[var(--color-primary)]/40">
+                <Dumbbell size={32} className="text-[var(--color-text)]" />
               </div>
               <h2 className="text-2xl font-black italic tracking-tight mb-2">AMRAP SET</h2>
-              <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed px-4">
+              <p className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase tracking-widest leading-relaxed px-4">
                 Enter your total completed reps for the top set
               </p>
             </div>
@@ -907,7 +907,7 @@ export const AppContent = () => {
                   value={amrapInput}
                   onChange={(e) => setAmrapInput(e.target.value)}
                   autoFocus
-                  className="w-full bg-black border border-zinc-800 rounded-2xl p-6 text-5xl font-black italic text-center text-blue-500 outline-none focus:border-blue-500 transition-all tabular-nums"
+                  className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-2xl p-6 text-5xl font-black italic text-center text-[var(--color-primary)] outline-none focus:border-[var(--color-primary)] transition-all tabular-nums"
                   placeholder="0"
                 />
               </div>
@@ -919,14 +919,14 @@ export const AppContent = () => {
                     submitWorkout(parseInt(amrapInput || '0'), amrapContext.weight, amrapContext.totalVolume, user);
                   }
                 }}
-                className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black italic tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30"
+                className="w-full bg-[var(--color-primary)] text-[var(--color-text)] py-5 rounded-2xl font-black italic tracking-widest hover:bg-[var(--color-secondary)] transition-all shadow-lg shadow-[var(--color-primary)]/30"
               >
                 SAVE PERFORMANCE
               </button>
 
               <button
                 onClick={() => setShowAMRAPModal(false)}
-                className="w-full py-2 text-[10px] font-black text-zinc-600 uppercase tracking-widest hover:text-zinc-400"
+                className="w-full py-2 text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest hover:text-[var(--color-text)]"
               >
                 CANCEL
               </button>
@@ -935,24 +935,24 @@ export const AppContent = () => {
         </div>
       )}
 
-      <nav className="fixed bottom-0 w-full bg-black/80 backdrop-blur-2xl border-t border-zinc-800/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
-        <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-blue-500' : 'text-zinc-600'}`}>
+      <nav className="fixed bottom-0 w-full bg-[var(--color-background)]/80 backdrop-blur-2xl border-t border-[var(--color-border)]/50 px-8 py-6 pb-10 flex justify-between items-center z-50">
+        <button onClick={() => setActiveTab('train')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'train' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
           <Dumbbell size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Train</span>
         </button>
-        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'history' ? 'text-blue-500' : 'text-zinc-600'}`}>
+        <button onClick={() => setActiveTab('history')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'history' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
           <History size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">History</span>
         </button>
-        <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'stats' ? 'text-blue-500' : 'text-zinc-600'}`}>
+        <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'stats' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
           <TrendingUp size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Progress</span>
         </button>
-        <button onClick={() => setActiveTab('achievements')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'achievements' ? 'text-blue-500' : 'text-zinc-600'}`}>
+        <button onClick={() => setActiveTab('achievements')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'achievements' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
           <Award size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Achievements</span>
         </button>
-        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'settings' ? 'text-blue-500' : 'text-zinc-600'}`}>
+        <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'settings' ? 'text-[var(--color-primary)]' : 'text-[var(--color-text-muted)]'}`}>
           <SettingsIcon size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Settings</span>
         </button>

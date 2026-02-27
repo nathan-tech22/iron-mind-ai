@@ -111,7 +111,6 @@
 - [x] Added `User` type import to `src/components/TrainingDashboard.tsx` to resolve "Cannot find name 'User'" TypeScript error.
 - [x] Replaced "stick figures" in `src/components/LiftFigure.tsx` with minimalist barbell icons and animation.
 - [x] Reverted `LiftFigure.tsx` to previous "stick figure" version (as a baseline for new implementation).
-- [ ] Implement stylized, animated kinetic representations for lift movements in `LiftFigure.tsx`.
 - [x] Implemented animated kinetic squat visualization in `LiftFigure.tsx`.
 - [x] Reverted `LiftFigure.tsx` to minimalist barbell icon.
 - [x] Implemented distinct, animated instructional icons for each lift in `LiftFigure.tsx`.
@@ -120,6 +119,7 @@
 - [x] Implemented percentage display for lifts on the train tab.
 - [x] Added 'TM' label to training max display on lift cards.
 - [x] Implemented visual theme options (Founder Black, Iron Neon) and wired them to SettingsScreen/AppContent.
+- [x] Replaced hardcoded Tailwind color classes with CSS variables in `src/components/TrainingDashboard.tsx` to enable dynamic theming.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.

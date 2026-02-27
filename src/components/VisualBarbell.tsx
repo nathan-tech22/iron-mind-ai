@@ -7,11 +7,12 @@ interface PlateProps {
 const Plate: React.FC<PlateProps & { index: number }> = ({ weight, index }) => {
   const configs: Record<number, { color: string; height: string; width: string }> = {
     45: { color: 'bg-blue-600', height: 'h-20', width: 'w-4' },
-    25: { color: 'bg-green-600', height: 'h-16', width: 'w-3' },
-    15: { color: 'bg-yellow-500', height: 'h-14', width: 'w-2.5' },
-    10: { color: 'bg-white', height: 'h-12', width: 'w-2' },
-    5: { color: 'bg-red-600', height: 'h-10', width: 'w-1.5' },
-    2.5: { color: 'bg-zinc-400', height: 'h-8', width: 'w-1' },
+    35: { color: 'bg-yellow-500', height: 'h-18', width: 'w-3.5' },
+    25: { color: 'bg-emerald-500', height: 'h-16', width: 'w-3' },
+    15: { color: 'bg-orange-500', height: 'h-14', width: 'w-2.5' },
+    10: { color: 'bg-zinc-500', height: 'h-12', width: 'w-2' },
+    5: { color: 'bg-blue-900', height: 'h-10', width: 'w-1.5' },
+    2.5: { color: 'bg-emerald-500', height: 'h-8', width: 'w-1' },
   };
 
   const config = configs[weight] || configs[2.5];
