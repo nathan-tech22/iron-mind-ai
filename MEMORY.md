@@ -118,6 +118,7 @@
 - [x] Added 'Cyber Light' (bright) and 'Obsidian Glow' (dark) themes to `src/app/globals.css`.
 - [x] Added 'Cyber Light' and 'Obsidian Glow' theme options to the dropdown in `src/components/SettingsScreen.tsx`.
 - [x] Implemented dynamic theming in `src/components/AchievementsScreen.tsx` using CSS variables.
+- [x] Implemented dynamic theming in `src/components/PRTracker.tsx` using CSS variables.
 - [x] Implemented custom color scheme for weight plates in `VisualBarbell.tsx`.
 
 ### Blocked
