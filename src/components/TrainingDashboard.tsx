@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
 import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle, Award } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { analyzeProgress } from '@/lib/coach-logic';
 import { estimate1RM } from '@/lib/iron-logic';
