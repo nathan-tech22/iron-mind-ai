@@ -11,6 +11,7 @@ interface SetRowProps {
   toggleSet: (index: number) => void;
   rpeValue: number | null;
   onRPEChange: (index: number, rpe: number) => void;
+  percentage: number; // New prop for percentage
 }
 
 export const SetRow = ({ set, index, completedSets, toggleSet, rpeValue, onRPEChange }: SetRowProps) => {
@@ -29,6 +30,8 @@ export const SetRow = ({ set, index, completedSets, toggleSet, rpeValue, onRPECh
           <span className="text-sm text-zinc-400"> lbs</span>
           <span className="text-xs text-zinc-600 mx-2">•</span>
           <span className="text-sm text-zinc-400">{set.reps} reps</span>
+          <span className="text-xs text-zinc-600 mx-2">•</span>
+          <span className="text-sm text-blue-400">{Math.round(percentage)}%</span>
         </div>
       </div>
       {isCompleted && (

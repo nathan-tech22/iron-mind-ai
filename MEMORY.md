@@ -4,16 +4,30 @@
 - Integrate readiness data into AI analysis for nuanced recommendations.
 - Implement comparative analysis for progress visualization.
 - Ensure all new features are deployed successfully to Vercel.
-- Resolve all Vercel build errors (`ReadinessCheckModal` duplicate definition, `SetRow` module not found, `DailyReadiness` type not found).
+- Resolve all Vercel build errors.
 - Ensure Supabase database schema is correctly set up for `lifts`, `workouts` (including `rpe`), and `daily_readiness` tables.
 - Update OpenClaw agent memory configuration for improved performance.
 - Reactivate the system heartbeat.
 - Improve the "ironmind" app by fixing "stick figures" and other unfinished UI items.
 - Implement interactive features, gamification, and AI coaching functionalities.
 
+## Operational Principles (from Nathan's Guidelines)
+- **Persona:** Act as a specific character with voice, vocabulary, decision framework, and anti-slop standards (SOUL.md).
+- **User Context:** Maintain a deep profile of Nathan (USER.md) for full context without asking.
+- **Heartbeat:** Use HEARTBEAT.md for batched periodic checks instead of separate crons.
+- **Tools:** Maintain TOOLS.md for local setup details (SSH, API paths, deployment targets, installed tools).
+- **Learning & Mistakes:** After any correction/mistake, write the lesson to `memory/learnings.md` with the pattern that caused it, and a rule to prevent recurrence. Review lessons at session start.
+- **Memory Management:** `MEMORY.md` is for curated, distilled insights (under 100 lines); use subfiles (`memory/projects.md`, `memory/people.md`) for details. Review/update every few days. Daily notes go to `memory/YYYY-MM-DD.md` (raw logs).
+- **Security:** Never guess config changes; read docs, backup. Fix errors immediately. Never destroy Git history. Hard rules in SOUL.md. API keys centralized in `.secrets`.
+- **Vibecoding (Content Standard):** All output must pass a human test – no generic AI language/formatting, copy must sound like a specific human.
+- **Planning:** "Write it down, no mental notes." For 3+ step tasks, write the plan first. Every task needs verification (commit hash, URL check). Stop/re-plan if assumptions break.
+- **Error Handling:** Self-improvement loop: fix it → write lesson → write rule → review at session start.
+- **Status Updates:** For operations > 10 seconds, provide updates (what, how long).
+- **Autonomy:** Safe to do freely (read files, search web, deploy bug fixes, update databases). Must ask first (spending money, deleting production resources, changing revenue models, security incidents).
+
 ## Constraints & Preferences
 - The AI assistant cannot directly check Vercel build status or API; it relies on the user providing build logs.
-- Supabase schema updates (specifically adding an `rpe` column to `workouts` and creating a `daily_readiness` table) are user actions.
+- Supabase schema updates are user actions.
 - The AI assistant cannot directly modify system configuration files (e.g., `openclaw.json`) on the host system.
 - Updates should be communicated via WhatsApp.
 - Focus solely on the "ironmind" project; "healthguard-ai" is to be left untouched.
@@ -67,14 +81,14 @@
     - User confirmed creation of `daily_readiness` table in Supabase.
     - `handleSubmitReadiness` in `src/components/TrainingDashboard.tsx` updated to save readiness data to Supabase and `localStorage`.
     - `initializeData` in `TrainingDashboard.tsx` updated to fetch today's readiness data from Supabase (or local storage as fallback) to control modal visibility.
-- [x] Implemented Daily Readiness Check - Phase 3 (AI Integration) *(Code implemented, but deployment failed)*:
+- [x] Implemented Daily Readiness Check - Phase 3 (AI Integration):
     - `DailyReadiness` type imported into `coach-logic.ts`.
     - `analyzeProgress` function signature updated to accept `dailyReadiness: DailyReadiness | null`.
     - New AI insight added to `analyzeProgress` to suggest recovery/reduced intensity if `overall_score` is low.
     - `TrainingViewProps` interface in `TrainingDashboard.tsx` updated to include `dailyReadiness`.
     - `readinessData` from `AppContent` passed to `TrainingView`.
     - `dailyReadiness` accepted in `TrainingView` arguments and passed to `analyzeProgress`.
-- [x] Initialized Advanced Progress Visualization - Comparative Analysis (UI & State Management) *(Code implemented, but deployment failed)*:
+- [x] Initialized Advanced Progress Visualization - Comparative Analysis (UI & State Management):
     - Added `comparisonMode: boolean` and `comparisonLifts: string[]` states to `PRTracker.tsx`.
     - Added a "Compare Lifts" toggle button to the `PRTracker` header.
     - Conditionally rendered the main content of `PRTracker` based on `comparisonMode`.
@@ -87,62 +101,27 @@
 - [x] Assistant successfully read `src/components/TrainingDashboard.tsx` from its internal workspace.
 - [x] Assistant successfully read `src/components/SetRow.tsx` from its internal workspace.
 - [x] Assistant successfully wrote `test_write.txt` in the root of the workspace (`/home/node/.openclaw/workspace`) with content 'Permissions Fixed'.
-
-### In Progress
-- [ ] Resolving Vercel build failures for `iron-mind-ai` project. (NOW RESOLVED!)
-- [ ] Debugging the underlying platform issue causing discrepancies between assistant's workspace file modifications and user's local Git repository. (NOW RESOLVED!)
-- [ ] Ensuring Vercel deploys the absolute latest commit from the `main` branch, as it is inconsistently building older commits (`c669a23`, `47ed495`) instead of the latest (`1d87322` or newer). (NOW RESOLVED!)
-- [ ] Resolving `Type error: Cannot find name 'DailyReadiness'` when Vercel attempts to build commit `47ed495`. (NOW RESOLVED!)
-- [ ] Debugging the `git@github.com: Permission denied (publickey)` error preventing assistant's Git operations. (NOW RESOLVED!)
+- [x] Resolved `Type error: Cannot find name 'user'` in `src/components/TrainingDashboard.tsx` by correctly scoping the `user` object and refactoring `submitWorkout` for reliability.
+- [x] Updated AMRAP modal button to pass `user` to `submitWorkout`.
+- [x] Removed redundant `supabase.auth.getUser()` calls within `submitWorkout`.
+- [x] Relocated "PR Celebration Logic" and achievement checks within `submitWorkout` to ensure `user` is in scope after successful Supabase sync.
+- [x] Decoupled local UI and state updates (`setHistory`, `localStorage.setItem`, `setCompletedSets`, `setShowSuccess`, `setShowAMRAPModal`) from the `try...catch` block in `submitWorkout` to ensure consistent user experience.
+- [x] Fixed `initializeData` function in `src/components/TrainingDashboard.tsx` to correctly map `camelCase` `localStorage` keys to `snake_case` properties for `readinessData` for both logged-in and local fallback users.
+- [x] Resolved duplicate code and parsing errors in `src/components/TrainingDashboard.tsx` by fully rewriting the `submitWorkout` function.
+- [x] Added `User` type import to `src/components/TrainingDashboard.tsx` to resolve "Cannot find name 'User'" TypeScript error.
+- [x] Refined `SquatFigure` SVG in `src/components/LiftFigure.tsx`.
+- [x] Refined `BenchFigure` SVG in `src/components/LiftFigure.tsx`.
+- [x] Refined `DeadliftFigure` SVG in `src/components/LiftFigure.tsx`.
+- [x] Refined `PressFigure` SVG in `src/components/LiftFigure.tsx`.
+- [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 
 ### Blocked
-- Assistant's autonomous `git fetch`, `git pull`, and `git push` operations are blocked by persistent SSH `Permission denied (publickey)` errors. (NOW RESOLVED!)
-- Assistant's ability to ensure *all* files are correctly updated on the user's system and Git is blocked by the inability to perform Git operations. (NOW RESOLVED!)
-- User refuses to perform manual file edits or Git operations, requiring the assistant to find an autonomous solution for these platform-level issues. (NOW RESOLVED!)
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.
 
-## Key Decisions
-- **Reactivate Heartbeat**: The system heartbeat was reactivated by modifying `HEARTBEAT.md`.
-- **Complete `healthguard-ai` Analysis Task**: Decided to complete the pre-existing task to analyze the `healthguard-ai` directory before proceeding with general "ironmind" progress.
-- **De-prioritize `healthguard-ai`**: User instructed to "leave healthguard alone for now just focus on ironmind."
-- **Structured Planning**: Created `tasks/todo.md` to outline the steps for enhancement.
-- **Contextualization First**: Prioritized gathering internal context about the "ironmind" app from available files and memory before researching external apps or proposing new features.
-- **Configure `web_search` to use Gemini**: Instructed user to explicitly set `tools.web.search.provider` to "gemini" in `openclaw.json` after initial failures.
-- **Troubleshoot missing/invalid API key**: Asked user for clarification on how Gemini API key was set and to double-check it.
-- **Prioritize Gemini API key verification**: Focused on resolving Gemini API key first among "all methods" for web search.
-- **Start `ironmind` UI/Theme fixes**: After web search was fixed, started by exploring `iron-mind/src/` to identify styling and UI components.
-- **Fix font conflict**: Removed `font-family: Arial, Helvetica, sans-serif;` from `iron-mind/src/app/globals.css`.
-- **Identify "stick figures" source**: Used `grep` to find "train" in `iron-mind/src/`, identifying `TrainingDashboard.tsx` and `LiftFigure.tsx`.
-- **Refine `LiftFigure` animation**: Modified `SquatFigure` and `DeadliftFigure` SVGs in `iron-mind/src/components/LiftFigure.tsx` for cohesive animation.
-- **Resolve Git Push `Permission denied`**: Acknowledged deployment oversight, then resolved persistent `git push` failure by explicitly using `GIT_SSH_COMMAND`.
-- **Generate new SSH key**: Generated a new SSH key pair (`~/.ssh/openclaw_bot_github`) when the existing key and configuration attempts failed.
-- **Fix `BellOff` import error**: Added `BellOff` to the `lucide-react` import statement in `iron-mind/src/components/SettingsScreen.tsx`.
-- **Fix `restTimer` prop error**: Passed the `restTimer` prop to the `TrainingView` component in `iron-mind/src/components/TrainingDashboard.tsx`.
-- **Utilize sub-agents for parallel work**: Decided to spawn a sub-agent for "Research Interactive Features" while the main agent continues the interface review.
-- **Continue without sub-agents**: User instruction to "just keep working for now" led the AI to perform tasks like web research directly.
-- **Prioritize client-side RPE/RIR logging**: Decided to implement the UI and state management for RPE/RIR before moving to other features.
-- **Extract `SetRow` component**: To modularize the UI and make the `TrainingView` cleaner, especially with the addition of the RPE input.
-- **Log RPE for the *last completed set}***: To simplify the initial integration into `WorkoutLog` and Supabase.
-- **Workaround for persistent Vercel TypeScript error**: After confirming `rpe` property existed on `WorkoutLog` interface, a workaround was implemented in `coach-logic.ts` by explicitly casting `liftLogs[0]` to `any` before accessing the `rpe` property.
-- **Daily Readiness Check UI placement**: Implemented as a modal within the `AppContent` component of `TrainingDashboard.tsx`.
-- **Daily Readiness Check - Phase 2 deployment**: Proceeded with push after user requested, assuming `daily_readiness` table was created in Supabase.
-- **Agent Memory Configuration**: Recommended four `openclaw.json` configuration changes to user (Memory Flush, Hybrid Search, Context Pruning, Session Indexing).
-- **Advanced Progress Visualization - Comparative Analysis approach**: Decided to implement as a dedicated "Comparative View" section within `PRTracker.tsx`.
-- **Turbopack build failures**: Identified duplicate `ReadinessCheckModal` definition and `SetRow` module not found as the cause of the latest Vercel build failure (`c669a23`).
-- **Manual Git Push**: User assumed responsibility for `git push` operations due to recurring SSH key access issues with the assistant.
-- **Supabase Schema via SQL**: Decided to provide SQL `CREATE TABLE` statements for `lifts`, `workouts`, and `daily_readiness` to the user for direct execution in the Supabase SQL Editor.
-- **Overwrite File for Complex Fixes (Initial)**: Initial strategy shifted to providing full, corrected file content for complete overwrite, after verifying on GitHub (later rejected by user).
-- **User Manual File Creation (Initially)**: Due to local filesystem inconsistencies, the user manually created `SetRow.tsx`.
-- **User-led Manual `TrainingDashboard.tsx` Edit**: User manually deleted the duplicate `ReadinessCheckModal` definition.
-- **Attempted AI Git Push as Test**: Assistant attempted a minor change and push to GitHub to test its Git capabilities, which failed.
-- **Manual File Overwrite Proposed (Rejected)**: Assistant proposed providing full, correct file content for `TrainingDashboard.tsx` and `SetRow.tsx` for manual overwrite, which was rejected by the user.
-- **Attempted Aggressive Git Reset**: Assistant attempted `git fetch origin && git reset --hard origin/main` but this failed.
-- **Direct File Write Test**: Assistant attempted a direct `write` operation to create `test_write.txt` to diagnose basic file writing capabilities.
-
 ## Next Steps
-1. Continue development on `iron-mind`.
-2. Address any remaining UI items, interactive features, gamification, and AI coaching functionalities. 
-3. Specifically address the "stick figures" and other unfinished UI items.
+1. Continue development on `iron-mind`, addressing any remaining UI items, interactive features, gamification, and AI coaching functionalities.
+2. Review other unfinished UI items, beyond the `LiftFigure`s.
+3. Implement percentage display for lifts on the train tab.
 
 ## Critical Context
 - The `DailyReadiness` interface is defined in `iron-mind/src/lib/types.ts`.
@@ -164,7 +143,7 @@
     - Modified "Hall of Fame" for lift selection.
     - `ComparativeProgressChart` component definition for multi-lift trends.
 - The agent has recommended specific `openclaw.json` configuration changes to the user to improve its memory: `Memory Flush`, `Hybrid Search`, `Context Pruning`, `Session Indexing`.
-- The latest correct code for `TrainingDashboard.tsx` (single `ReadinessCheckModal` definition, `DailyReadiness` imported) is confirmed to be in the assistant's workspace and on GitHub at commit `1d87322`.
+- The latest correct code for `TrainingDashboard.tsx` (single `ReadinessCheckModal` definition, `DailyReadiness` imported) is confirmed to be in the assistant's workspace and on GitHub at commit `a852ccb`.
 - The `SetRow.tsx` file is correctly defined and present in the assistant's workspace, but its presence on GitHub and the user's local filesystem has been inconsistent due to write/sync issues.
 - Vercel build failures for the `iron-mind-ai` project show:
     - Initially, `Module not found: Can't resolve './SetRow'` and "`ReadinessCheckModal` is defined multiple times" when building old commits or using cache.
