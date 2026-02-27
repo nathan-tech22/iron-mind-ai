@@ -110,6 +110,9 @@
 - [x] Resolved duplicate code and parsing errors in `src/components/TrainingDashboard.tsx` by fully rewriting the `submitWorkout` function.
 - [x] Added `User` type import to `src/components/TrainingDashboard.tsx` to resolve "Cannot find name 'User'" TypeScript error.
 - [x] Replaced "stick figures" in `src/components/LiftFigure.tsx` with minimalist barbell icons and animation.
+- [x] Reverted `LiftFigure.tsx` to previous "stick figure" version (as a baseline for new implementation).
+- [ ] Implement stylized, animated kinetic representations for lift movements in `LiftFigure.tsx`.
+- [x] Implemented animated kinetic squat visualization in `LiftFigure.tsx`.
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 - [x] Implemented percentage display for lifts on the train tab.
 - [x] Added 'TM' label to training max display on lift cards.
