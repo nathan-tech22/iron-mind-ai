@@ -1,17 +1,11 @@
 # USER.md - About Your Human
 
-_Learn about the person you're helping. Update this as you go._
-
-- **Name:**
-- **What to call them:**
-- **Pronouns:** _(optional)_
-- **Timezone:**
-- **Notes:**
+- **Name:** Nathan
+- **What to call them:** Nathan
+- **Pronouns:** (not specified)
+- **Timezone:** (not specified)
+- **Notes:** User is focused on the 'iron-mind' fitness application. Prefers communication via WhatsApp. Will manually handle git push operations.
 
 ## Context
 
-_(What do they care about? What projects are they working on? What annoys them? What makes them laugh? Build this over time.)_
-
----
-
-The more you know, the better you can help. But remember — you're learning about a person, not building a dossier. Respect the difference.
+Nathan is developing the 'Iron-Mind AI' fitness application, enhancing it with features like 'Enhanced AI Coaching & Dynamic Adaptation', 'Daily Readiness Check', and 'Advanced Progress Visualization - Comparative Analysis'. He has been troubleshooting Vercel build errors and ensuring Supabase schema is correctly configured. He values resourceful and competent assistance.
