@@ -9,7 +9,7 @@ import { estimate1RM } from '@/lib/iron-logic';
 import { PRTracker } from './PRTracker';
 import { HistoryScreen } from './HistoryScreen';
 import { SettingsScreen } from './SettingsScreen';
-import { LiftFigure } from './LiftFigure';
+// import { LiftFigure } from './LiftFigure'; // Temporarily removed per user request
 import { SetRow } from './SetRow';
 
 import { ironVault } from '@/lib/vault-logic';
@@ -204,7 +204,7 @@ const TrainingView = ({
                       </div>
                     )}
                   </div>
-                  <LiftFigure name={lift.name} active={selectedLift.id === lift.id} />
+
                 </div>
               </button>
             );
