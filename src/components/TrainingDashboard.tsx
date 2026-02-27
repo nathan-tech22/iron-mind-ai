@@ -13,7 +13,7 @@ import { SetRow } from './SetRow';
 
 import { ironVault } from '@/lib/vault-logic';
 
-import { Lift, WorkoutLog } from '@/lib/types';
+import { Lift, WorkoutLog, DailyReadiness } from '@/lib/types'; // Corrected import to include DailyReadiness
 
 const initialLiftsData: Lift[] = [
   { id: '1', name: 'SQUAT', tm: 315 },
@@ -81,14 +81,14 @@ const TrainingView = ({
     return { pct: ((diff / prev) * 100).toFixed(1), up: diff >= 0 };
   };
 
-  const insights = analyzeProgress(history, lifts, dailyReadiness);
-  const activeInsight = insights.find((i: any) => i.lift === selectedLift.name);
+  const insights = analyzeProgress(history, lifts, dailyReadiness); // Pass dailyReadiness
+  const activeInsight = insights.find((i: any) => i.lift === selectedLift.name || i.lift === 'GENERAL'); // Include 'GENERAL' insights
 
   // Get current PR for the selected lift
   const currentPR = history
     .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
     .reduce((max: number, h: any) => {
-      const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(h.sets) || 1), 5);
+      const est = estimate1RM.epley(parseFloat(String(h.volume).replace(/,/g, '')) / (parseInt(String(h.sets)) || 1), 5);
       return est > max ? est : max;
     }, 0);
 
@@ -333,6 +333,93 @@ export const AppContent = () => {
     }
     return () => clearInterval(interval);
   }, [restTimer]);
+
+  const ReadinessCheckModal = ({ // This is the ONLY definition of ReadinessCheckModal
+    readinessData,
+    onReadinessChange,
+    onSubmit,
+    onSkip
+  }: {
+    readinessData: {
+      sleepQuality: number | null;
+      stressLevel: number | null;
+      fatigueLevel: number | null;
+      overallScore: number | null;
+    };
+    onReadinessChange: (key: 'sleepQuality' | 'stressLevel' | 'fatigueLevel', value: number) => void;
+    onSubmit: () => void;
+    onSkip: () => void;
+  }) => {
+    const InputRow = ({ label, value, onChange }: {
+      label: string;
+      value: number | null;
+      onChange: (v: number) => void;
+    }) => (
+      <div className="flex items-center justify-between p-3 bg-zinc-800 rounded-xl">
+        <label className="text-sm font-medium text-zinc-300">{label}</label>
+        <input
+          type="number"
+          min="1"
+          max="5"
+          value={value === null ? '' : value}
+          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
+          className="w-16 bg-zinc-700 text-white text-center rounded-lg p-2 text-sm focus:ring-blue-500 focus:border-blue-500"
+          placeholder="-"
+        />
+      </div>
+    );
+
+    return (
+      <div className="fixed inset-0 z-[400] bg-black/90 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-300">
+        <div className="bg-zinc-900 border border-zinc-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+          <div className="text-center mb-6">
+            <Sparkles size={40} className="text-blue-500 mx-auto mb-3" />
+            <h2 className="text-2xl font-black italic tracking-tight text-white">Daily Readiness</h2>
+            <p className="text-zinc-500 text-sm mt-1">How are you feeling today?</p>
+          </div>
+
+          <InputRow
+            label="Sleep Quality (1-5)"
+            value={readinessData.sleepQuality}
+            onChange={(v) => onReadinessChange('sleepQuality', v)}
+          />
+          <InputRow
+            label="Stress Level (1-5)"
+            value={readinessData.stressLevel}
+            onChange={(v) => onReadinessChange('stressLevel', v)}
+          />
+          <InputRow
+            label="Fatigue Level (1-5)"
+            value={readinessData.fatigueLevel}
+            onChange={(v) => onReadinessChange('fatigueLevel', v)}
+          />
+
+          <div className="pt-4 text-center">
+            <div className="text-zinc-400 text-sm font-medium mb-2">Overall Readiness Score:</div>
+            <div className="text-5xl font-black italic text-blue-500">
+              {readinessData.overallScore === null ? '-' : readinessData.overallScore}
+            </div>
+          </div>
+
+          <button
+            onClick={onSubmit}
+            disabled={readinessData.overallScore === null}
+            className={`w-full py-4 rounded-xl font-black italic tracking-widest transition-colors ${
+              readinessData.overallScore !== null ? 'bg-blue-600 text-white' : 'bg-zinc-700 text-zinc-500 cursor-not-allowed'
+            }`}
+          >
+            SUBMIT READINESS
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full py-2 text-xs font-black uppercase tracking-widest text-zinc-600 hover:text-zinc-400"
+          >
+            SKIP FOR NOW
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Load History and Lifts
   useEffect(() => {
