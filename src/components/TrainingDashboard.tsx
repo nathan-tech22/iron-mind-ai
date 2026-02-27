@@ -197,7 +197,7 @@ const TrainingView = ({
                 </div>
                 <div className="flex justify-between items-end">
                   <div className="flex flex-col">
-                    <div className="text-xl font-black italic">{lift.tm}</div>
+                    <div className="text-xl font-black italic">{lift.tm} TM</div>
                     {trend && (
                       <div className={`text-[8px] font-black italic ${trend.up ? 'text-emerald-500' : 'text-amber-500'}`}>
                         {trend.up ? '+' : ''}{trend.pct}% CoC

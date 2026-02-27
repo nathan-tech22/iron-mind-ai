@@ -112,6 +112,7 @@
 - [x] Replaced "stick figures" in `src/components/LiftFigure.tsx` with minimalist barbell icons and animation.
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 - [x] Implemented percentage display for lifts on the train tab.
+- [x] Added 'TM' label to training max display on lift cards.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.
