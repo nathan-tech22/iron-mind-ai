@@ -13,7 +13,16 @@ import { SetRow } from './SetRow';
 
 import { ironVault } from '@/lib/vault-logic';
 
-import { Lift, WorkoutLog, DailyReadiness, Achievement } from '@/lib/types'; // Corrected import to include DailyReadiness and Achievement
+import { Lift, WorkoutLog, Achievement } from '@/lib/types';
+
+// Local definition of DailyReadiness for Vercel build robustness
+interface DailyReadiness {
+  date: string;
+  sleep_quality: number | null;
+  stress_level: number | null;
+  fatigue_level: number | null;
+  overall_score: number | null;
+} // Corrected import to include DailyReadiness and Achievement
 import { AchievementsScreen, initialAchievements } from './AchievementsScreen';
 
 const initialLiftsData: Lift[] = [
