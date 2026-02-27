@@ -793,7 +793,7 @@ export const AppContent = () => {
           onResetTM={handleResetTM}
           restTimer={restTimer}
           rpeValues={rpeValues}
-          onRPEChange={onRPEChange}
+          onRPEChange={handleRPEChange}
         />
       )}
       {activeTab === 'stats' && <PRTracker />}
