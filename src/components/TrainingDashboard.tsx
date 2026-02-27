@@ -320,6 +320,44 @@ export const AppContent = () => {
     setShowReadinessModal(false);
   };
 
+  const checkAndAwardAchievement = async (userId: string, achievementId: string) => {
+    const achievement = initialAchievements.find(a => a.id === achievementId);
+    if (!achievement) return;
+
+    // Check if already earned
+    const { data: existingAchievement, error: fetchError } = await supabase
+      .from('user_achievements')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .single();
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means 'no rows found'
+      console.error(`Error checking achievement ${achievementId}:`, fetchError);
+      return;
+    }
+
+    if (!existingAchievement) {
+      // Award achievement
+      const { error: insertError } = await supabase.from('user_achievements').insert({
+        user_id: userId,
+        achievement_id: achievementId,
+        earned_date: new Date().toISOString(),
+      });
+
+      if (insertError) {
+        console.error(`Error awarding achievement ${achievementId}:`, insertError);
+        return;
+      }
+
+      setAchievements(prev => prev.map(ach =>
+        ach.id === achievementId ? { ...ach, earned: true, earned_date: new Date().toISOString() } : ach
+      ));
+      console.log(`Achievement Earned: ${achievement.name}`);
+      // TODO: Potentially add a toast notification for earned achievements
+    }
+  };
+
   const handleSkipReadiness = () => {
     // TODO: Implement logic for skipping readiness (e.g., store a "skipped" flag for today)
     console.log('Skipping Readiness for today.');
@@ -463,6 +501,16 @@ export const AppContent = () => {
               // rpe is not currently in the history fetch, need to add if exists
             }));
             setHistory(mappedHistory);
+
+            // Check 'First Iron Forged' and 'Consistent Crusher' on load for logged-in users
+            if (user) {
+              if (mappedHistory.length >= 1) {
+                checkAndAwardAchievement(user.id, 'first_workout');
+              }
+              if (mappedHistory.length >= 5) {
+                checkAndAwardAchievement(user.id, 'five_workouts');
+              }
+            }
           }
 
           // 3. Fetch Daily Readiness for logged-in user
@@ -715,6 +763,18 @@ export const AppContent = () => {
           });
         } else {
           ironVault.sync();
+
+          // Achievement Checks
+          checkAndAwardAchievement(user.id, 'first_workout');
+
+          const { count: workoutCount, error: countError } = await supabase
+            .from('workouts')
+            .select('id', { count: 'exact' })
+            .eq('user_id', user.id);
+          
+          if (!countError && workoutCount && workoutCount >= 5) {
+            checkAndAwardAchievement(user.id, 'five_workouts');
+          }
         }
       }
     } catch (e) {
@@ -747,6 +807,9 @@ export const AppContent = () => {
 
     if (currentEst > previousBest && history.length > 0) {
       setShowPR(true);
+      if (user) {
+        checkAndAwardAchievement(user.id, 'new_pr');
+      }
       setTimeout(() => {
         try {
           const confetti = require('canvas-confetti').default;
