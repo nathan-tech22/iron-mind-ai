@@ -27,6 +27,32 @@
   --color-danger: #ff0000; /* Bright red */
 }
 
+.cyber-light {
+  --color-primary: #007bff; /* Bright blue */
+  --color-secondary: #6a00ff; /* Royal purple */
+  --color-background: #f0f2f5; /* Light grey/off-white */
+  --color-text: #212529; /* Dark grey */
+  --color-text-muted: #6c757d; /* Medium grey */
+  --color-card-bg: #ffffff; /* White card background */
+  --color-border: #dee2e6; /* Light grey border */
+  --color-success: #28a745; /* Darker green */
+  --color-warning: #ffc107; /* Darker yellow */
+  --color-danger: #dc3545; /* Darker red */
+}
+
+.obsidian-glow {
+  --color-primary: #9b59b6; /* Glowing purple */
+  --color-secondary: #be75d6; /* Lighter purple */
+  --color-background: #1c1c1c; /* Very dark grey */
+  --color-text: #ecf0f1; /* Light grey text */
+  --color-text-muted: #7f8c8d; /* Muted grey */
+  --color-card-bg: #2c3e50; /* Dark blue-grey */
+  --color-border: #34495e; /* Deeper blue-grey border */
+  --color-success: #2ecc71; /* Emerald green */
+  --color-warning: #f1c40f; /* Sunflower yellow */
+  --color-danger: #e74c3c; /* Alizarin red */
+}
+
 body {
   background-color: var(--color-background);
   color: var(--color-text);

@@ -109,17 +109,15 @@
 - [x] Fixed `initializeData` function in `src/components/TrainingDashboard.tsx` to correctly map `camelCase` `localStorage` keys to `snake_case` properties for `readinessData` for both logged-in and local fallback users.
 - [x] Resolved duplicate code and parsing errors in `src/components/TrainingDashboard.tsx` by fully rewriting the `submitWorkout` function.
 - [x] Added `User` type import to `src/components/TrainingDashboard.tsx` to resolve "Cannot find name 'User'" TypeScript error.
-- [x] Replaced "stick figures" in `src/components/LiftFigure.tsx` with minimalist barbell icons and animation.
-- [x] Reverted `LiftFigure.tsx` to previous "stick figure" version (as a baseline for new implementation).
-- [x] Implemented animated kinetic squat visualization in `LiftFigure.tsx`.
-- [x] Reverted `LiftFigure.tsx` to minimalist barbell icon.
-- [x] Implemented distinct, animated instructional icons for each lift in `LiftFigure.tsx`.
 - [x] Removed all lift visualizations from `LiftFigure.tsx`; component is now empty.
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 - [x] Implemented percentage display for lifts on the train tab.
 - [x] Added 'TM' label to training max display on lift cards.
 - [x] Implemented visual theme options (Founder Black, Iron Neon) and wired them to SettingsScreen/AppContent.
 - [x] Replaced hardcoded Tailwind color classes with CSS variables in `src/components/TrainingDashboard.tsx` to enable dynamic theming.
+- [x] Added 'Cyber Light' (bright) and 'Obsidian Glow' (dark) themes to `src/app/globals.css`.
+- [x] Added 'Cyber Light' and 'Obsidian Glow' theme options to the dropdown in `src/components/SettingsScreen.tsx`.
+- [x] Implemented custom color scheme for weight plates in `VisualBarbell.tsx`.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.

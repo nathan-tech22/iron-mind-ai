@@ -197,6 +197,8 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [], onThemeChan
                 >
                   <option>FOUNDER BLACK</option>
                   <option>IRON NEON</option>
+                  <option>CYBER LIGHT</option>
+                  <option>OBSIDIAN GLOW</option>
                 </select>
               </div>
             </div>
