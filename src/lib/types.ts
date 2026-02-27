@@ -35,8 +35,12 @@ export interface DailyReadiness {
   overall_score: number;
 }
 
-export interface CalculatedPR {
-  lift: string;
-  est1RM: number;
-  date: string;
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string; // e.g., Lucide icon name or image path
+  criteria: string; // Human-readable criteria
+  earned?: boolean; // Whether the user has earned it
+  earned_date?: string; // Date earned (ISO string)
 }

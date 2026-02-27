@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { VisualBarbell } from './VisualBarbell';
-import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle } from 'lucide-react';
+import { Dumbbell, History, TrendingUp, Settings as SettingsIcon, CheckCircle2, Circle, ChevronLeft, ChevronRight, Sparkles, AlertCircle, Award } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { calculateWorkout } from '@/lib/workout-logic';
 import { analyzeProgress } from '@/lib/coach-logic';
@@ -13,7 +13,8 @@ import { SetRow } from './SetRow';
 
 import { ironVault } from '@/lib/vault-logic';
 
-import { Lift, WorkoutLog, DailyReadiness } from '@/lib/types'; // Corrected import to include DailyReadiness
+import { Lift, WorkoutLog, DailyReadiness, Achievement } from '@/lib/types'; // Corrected import to include DailyReadiness and Achievement
+import { AchievementsScreen, initialAchievements } from './AchievementsScreen';
 
 const initialLiftsData: Lift[] = [
   { id: '1', name: 'SQUAT', tm: 315 },
@@ -250,6 +251,7 @@ const TrainingView = ({
 };
 
 export const AppContent = () => {
+  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
   const [activeTab, setActiveTab] = useState('train');
   const [lifts, setLifts] = useState(initialLiftsData);
   const [history, setHistory] = useState<WorkoutLog[]>([]);
@@ -468,6 +470,23 @@ export const AppContent = () => {
           }
 
           // 3. Fetch Daily Readiness for logged-in user
+
+              // 4. Fetch User Achievements
+              const { data: userAchievementsData, error: achievementsError } = await supabase
+                .from('user_achievements')
+                .select('*')
+                .eq('user_id', user.id);
+
+              if (achievementsError) throw achievementsError;
+
+              if (userAchievementsData && userAchievementsData.length > 0) {
+                const earnedAchievementIds = new Set(userAchievementsData.map(ua => ua.achievement_id));
+                setAchievements(prev => prev.map(ach => ({
+                  ...ach,
+                  earned: earnedAchievementIds.has(ach.id),
+                  earned_date: userAchievementsData.find(ua => ua.achievement_id === ach.id)?.earned_date || ach.earned_date
+                })));
+              }
           const todayDateString = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
           const { data: readinessEntry, error: readinessError } = await supabase
             .from('daily_readiness')
@@ -761,6 +780,7 @@ export const AppContent = () => {
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
       {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} />}
+      {activeTab === 'achievements' && <AchievementsScreen achievements={achievements} />}
 
       {showReadinessModal && (
         <ReadinessCheckModal
@@ -827,6 +847,10 @@ export const AppContent = () => {
         <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'stats' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <TrendingUp size={22} strokeWidth={2.5} />
           <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Progress</span>
+        </button>
+        <button onClick={() => setActiveTab('achievements')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'achievements' ? 'text-blue-500' : 'text-zinc-600'}`}>
+          <Award size={22} strokeWidth={2.5} />
+          <span className="text-[9px] font-black uppercase tracking-widest text-inherit">Achievements</span>
         </button>
         <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 ${activeTab === 'settings' ? 'text-blue-500' : 'text-zinc-600'}`}>
           <SettingsIcon size={22} strokeWidth={2.5} />
