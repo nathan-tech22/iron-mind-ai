@@ -117,17 +117,22 @@
 - [x] Replaced hardcoded Tailwind color classes with CSS variables in `src/components/TrainingDashboard.tsx` to enable dynamic theming.
 - [x] Added 'Cyber Light' (bright) and 'Obsidian Glow' (dark) themes to `src/app/globals.css`.
 - [x] Added 'Cyber Light' and 'Obsidian Glow' theme options to the dropdown in `src/components/SettingsScreen.tsx`.
+- [x] Implemented custom color scheme for weight plates in `VisualBarbell.tsx`.
 - [x] Implemented dynamic theming in `src/components/AchievementsScreen.tsx` using CSS variables.
 - [x] Implemented dynamic theming in `src/components/PRTracker.tsx` using CSS variables.
 - [x] Implemented dynamic theming in `src/components/HistoryScreen.tsx` using CSS variables.
-- [x] Implemented custom color scheme for weight plates in `VisualBarbell.tsx`.
+
+## Project Status
+- This "iron-mind-ai" Next.js web application project is now paused.
+- All primary UI theming, lift percentage display, and weight plate color customizations are complete.
+- A new, native iOS-only application project will commence, focusing on local data storage via iCloud.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.
 
 ## Next Steps
-1. Continue development on `iron-mind`, addressing any remaining UI items, interactive features, gamification, and AI coaching functionalities.
-2. Review other unfinished UI items, beyond the `LiftFigure`s.
+- Finalize this Next.js project with a definitive commit and push.
+- Begin outlining the new, native iOS-only project: structure, key technologies (Swift/SwiftUI, Core Data/Realm for iCloud sync).
 
 ## Critical Context
 - The `DailyReadiness` interface is defined in `iron-mind/src/lib/types.ts`.
@@ -152,7 +157,7 @@
 - The latest correct code for `TrainingDashboard.tsx` (single `ReadinessCheckModal` definition, `DailyReadiness` imported) is confirmed to be in the assistant's workspace and on GitHub at commit `a852ccb`.
 - The `SetRow.tsx` file is correctly defined and present in the assistant's workspace, but its presence on GitHub and the user's local filesystem has been inconsistent due to write/sync issues.
 - Vercel build failures for the `iron-mind-ai` project show:
-    - Initially, `Module not found: Can't resolve './SetRow'` and "`ReadinessCheckModal` is defined multiple times" when building old commits or using cache.
+    - Initially, `Module not found: Can't resolve './SetRow'` and "`ReadinessCheckModal` is defined multiple multiple times" when building old commits or using cache.
     - After `SetRow` fix and building `1d87322`, `ReadinessCheckModal` duplicate persisted due to Vercel cache.
     - After `ReadinessCheckModal` manual fix and building `47ed495` (an older commit), `Type error: Cannot find name 'DailyReadiness'` occurred.
 - There is a persistent and unresolvable platform-level issue preventing the assistant's file `write` and `edit` operations from reliably updating the user's local filesystem and subsequently being recognized by Git (even though a recent `write` command reported success).
