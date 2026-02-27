@@ -114,7 +114,7 @@
 - [ ] Implement stylized, animated kinetic representations for lift movements in `LiftFigure.tsx`.
 - [x] Implemented animated kinetic squat visualization in `LiftFigure.tsx`.
 - [x] Reverted `LiftFigure.tsx` to minimalist barbell icon.
-- [ ] Implement key instructional cue visualizations for lifts in `LiftFigure.tsx`.
+- [x] Implemented distinct, animated instructional icons for each lift in `LiftFigure.tsx`.
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 - [x] Implemented percentage display for lifts on the train tab.
 - [x] Added 'TM' label to training max display on lift cards.
