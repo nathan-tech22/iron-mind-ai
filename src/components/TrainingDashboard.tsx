@@ -764,7 +764,7 @@ export const AppContent = () => {
         } else {
           ironVault.sync();
 
-          // Achievement Checks
+          // Achievement Checks (only if Supabase sync is successful for logged-in users)
           checkAndAwardAchievement(user.id, 'first_workout');
 
           const { count: workoutCount, error: countError } = await supabase
@@ -786,9 +786,46 @@ export const AppContent = () => {
       });
     }
 
+    // Local UI and state updates (always execute regardless of Supabase sync success)
+    const updatedHistory = [newLog, ...history];
+    setHistory(updatedHistory);
+    localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
+    setCompletedSets([]);
+    setShowSuccess(true);
+    setShowAMRAPModal(false);
 
+    // PR Celebration Logic (always execute after local state update)
+    const previousBest = history
+      .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
+      .reduce((max: number, h: any) => {
+        const vol = parseFloat(String(h.volume).replace(/,/g, ''));
+        const sets = parseInt(String(h.sets)) || 1;
+        const est = estimate1RM.epley(vol / sets, 5);
+        return est > max ? est : max;
+      }, 0);
 
+    const currentEst = estimate1RM.epley(weightUsed, actualReps);
 
+    if (currentEst > previousBest && history.length > 0) {
+      setShowPR(true);
+      if (user) {
+        checkAndAwardAchievement(user.id, 'new_pr');
+      }
+      setTimeout(() => {
+        try {
+          const confetti = require('canvas-confetti').default;
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#2563eb', '#ffffff', '#60a5fa']
+          });
+        } catch (e) {
+          console.warn('Confetti failed');
+        }
+      }, 300);
+    }
+  };
 
   if (loading) {
     return (
