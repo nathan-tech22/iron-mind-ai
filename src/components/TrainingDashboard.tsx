@@ -231,6 +231,7 @@ const TrainingView = ({
               toggleSet={toggleSet}
               rpeValue={rpeValues[i] || null}
               onRPEChange={onRPEChange}
+              percentage={(set.weight / selectedLift.tm) * 100} // Pass percentage
             />
           ))}
         </div>
