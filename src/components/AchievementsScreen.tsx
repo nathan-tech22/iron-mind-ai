@@ -53,20 +53,20 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ achievem
 
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
-      case 'Dumbbell': return <Dumbbell size={24} className="text-white" />;
-      case 'Activity': return <Activity size={24} className="text-white" />;
-      case 'TrendingUp': return <TrendingUp size={24} className="text-white" />;
-      case 'Repeat': return <Repeat size={24} className="text-white" />;
-      case 'BrainCircuit': return <BrainCircuit size={24} className="text-white" />;
-      default: return <Sparkles size={24} className="text-white" />;
+      case 'Dumbbell': return <Dumbbell size={24} className="text-[var(--color-text)]" />;
+      case 'Activity': return <Activity size={24} className="text-[var(--color-text)]" />;
+      case 'TrendingUp': return <TrendingUp size={24} className="text-[var(--color-text)]" />;
+      case 'Repeat': return <Repeat size={24} className="text-[var(--color-text)]" />;
+      case 'BrainCircuit': return <BrainCircuit size={24} className="text-[var(--color-text)]" />;
+      default: return <Sparkles size={24} className="text-[var(--color-text)]" />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 pb-32">
+    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)] p-6 pb-32">
       <header className="pt-12 mb-8">
-        <h1 className="text-2xl font-black tracking-tighter italic text-blue-500">Achievements</h1>
-        <p className="text-zinc-500 text-sm mt-1">Milestones forged through iron and will.</p>
+        <h1 className="text-2xl font-black tracking-tighter italic text-[var(--color-primary)]">Achievements</h1>
+        <p className="text-[var(--color-text-muted)] text-sm mt-1">Milestones forged through iron and will.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -74,25 +74,25 @@ export const AchievementsScreen: React.FC<AchievementsScreenProps> = ({ achievem
           <div 
             key={ach.id} 
             className={`p-5 rounded-2xl border transition-all relative overflow-hidden 
-              ${ach.earned ? 'bg-blue-600/20 border-blue-500/50' : 'bg-zinc-900 border-zinc-800'}
+              ${ach.earned ? 'bg-[var(--color-primary)]/20 border-[var(--color-secondary)]/50' : 'bg-[var(--color-card-bg)] border-[var(--color-border)]'}
             `}
           >
             <div className="flex items-center gap-4 mb-3">
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center 
-                ${ach.earned ? 'bg-blue-600' : 'bg-zinc-700'}
+                ${ach.earned ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-card-bg)]'}
               `}>
-                {ach.earned ? getIconComponent(ach.icon) : <Lock size={20} className="text-zinc-400" />}
+                {ach.earned ? getIconComponent(ach.icon) : <Lock size={20} className="text-[var(--color-text-muted)]" />}
               </div>
               <div>
-                <h2 className={`font-black italic text-lg ${ach.earned ? 'text-white' : 'text-zinc-300'}`}>{ach.name}</h2>
-                <p className={`text-xs ${ach.earned ? 'text-blue-200' : 'text-zinc-500'}`}>{ach.description}</p>
+                <h2 className={`font-black italic text-lg ${ach.earned ? 'text-[var(--color-text)]' : 'text-[var(--color-text)]'}`}>{ach.name}</h2>
+                <p className={`text-xs ${ach.earned ? 'text-[var(--color-secondary)]' : 'text-[var(--color-text-muted)]'}`}>{ach.description}</p>
               </div>
             </div>
             <div className="text-right text-xs font-bold uppercase ">
               {ach.earned ? (
-                <span className="text-blue-300">Earned: {new Date(ach.earned_date || '').toLocaleDateString()}</span>
+                <span className="text-[var(--color-secondary)]">Earned: {new Date(ach.earned_date || '').toLocaleDateString()}</span>
               ) : (
-                <span className="text-zinc-600">Criteria: {ach.criteria}</span>
+                <span className="text-[var(--color-text-muted)]">Criteria: {ach.criteria}</span>
               )}
             </div>
           </div>
