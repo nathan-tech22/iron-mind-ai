@@ -4,7 +4,7 @@
 - **What to call them:** Nathan
 - **Pronouns:** (not specified)
 - **Timezone:** (not specified)
-- **Notes:** User is focused on the 'iron-mind' fitness application. Prefers communication via WhatsApp. Will manually handle git push operations.
+- **Notes:** User is focused on the 'iron-mind' fitness application. Prefers communication via WhatsApp. Will manually handle git push operations. **Always provide explicit `git add`, `git commit`, and `git push` commands when requesting a push.**
 
 ## Context
 

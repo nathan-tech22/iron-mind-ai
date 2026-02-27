@@ -109,11 +109,9 @@
 - [x] Fixed `initializeData` function in `src/components/TrainingDashboard.tsx` to correctly map `camelCase` `localStorage` keys to `snake_case` properties for `readinessData` for both logged-in and local fallback users.
 - [x] Resolved duplicate code and parsing errors in `src/components/TrainingDashboard.tsx` by fully rewriting the `submitWorkout` function.
 - [x] Added `User` type import to `src/components/TrainingDashboard.tsx` to resolve "Cannot find name 'User'" TypeScript error.
-- [x] Refined `SquatFigure` SVG in `src/components/LiftFigure.tsx`.
-- [x] Refined `BenchFigure` SVG in `src/components/LiftFigure.tsx`.
-- [x] Refined `DeadliftFigure` SVG in `src/components/LiftFigure.tsx`.
-- [x] Refined `PressFigure` SVG in `src/components/LiftFigure.tsx`.
+- [x] Replaced "stick figures" in `src/components/LiftFigure.tsx` with minimalist barbell icons and animation.
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
+- [x] Implemented percentage display for lifts on the train tab.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.
@@ -121,7 +119,6 @@
 ## Next Steps
 1. Continue development on `iron-mind`, addressing any remaining UI items, interactive features, gamification, and AI coaching functionalities.
 2. Review other unfinished UI items, beyond the `LiftFigure`s.
-3. Implement percentage display for lifts on the train tab.
 
 ## Critical Context
 - The `DailyReadiness` interface is defined in `iron-mind/src/lib/types.ts`.
