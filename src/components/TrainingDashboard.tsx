@@ -728,10 +728,11 @@ export const AppContent = () => {
       return;
     }
 
-    submitWorkout(parseInt(targetRepsStr), weightUsed, totalVolume);
+    const { data: { user } } = await supabase.auth.getUser();
+    submitWorkout(parseInt(targetRepsStr), weightUsed, totalVolume, user);
   };
 
-  const submitWorkout = async (actualReps: number, weightUsed: number, totalVolume: number) => {
+  const submitWorkout = async (actualReps: number, weightUsed: number, totalVolume: number, user: User | null) => {
     const lastSetRPE = rpeValues[completedSets[completedSets.length - 1]];
 
     const newLog: WorkoutLog = {
@@ -744,7 +745,6 @@ export const AppContent = () => {
 
     // Live Supabase Sync
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (user && user.id !== 'demo-user') {
         const { error } = await supabase.from('workouts').insert({
           user_id: user.id,
@@ -786,44 +786,71 @@ export const AppContent = () => {
       });
     }
 
+
+
+        } else {
+          ironVault.sync();
+
+          // Achievement Checks
+          checkAndAwardAchievement(user.id, 'first_workout');
+
+          const { count: workoutCount, error: countError } = await supabase
+            .from('workouts')
+            .select('id', { count: 'exact' })
+            .eq('user_id', user.id);
+          
+          if (!countError && workoutCount && workoutCount >= 5) {
+            checkAndAwardAchievement(user.id, 'five_workouts');
+          }
+
+          // PR Celebration Logic
+          const previousBest = history
+            .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
+            .reduce((max: number, h: any) => {
+              const vol = parseFloat(String(h.volume).replace(/,/g, ''));
+              const sets = parseInt(String(h.sets)) || 1;
+              const est = estimate1RM.epley(vol / sets, 5);
+              return est > max ? est : max;
+            }, 0);
+
+          const currentEst = estimate1RM.epley(weightUsed, actualReps);
+
+          if (currentEst > previousBest && history.length > 0) {
+            setShowPR(true);
+            if (user) {
+              checkAndAwardAchievement(user.id, 'new_pr');
+            }
+            setTimeout(() => {
+              try {
+                const confetti = require('canvas-confetti').default;
+                confetti({
+                  particleCount: 150,
+                  spread: 70,
+                  origin: { y: 0.6 },
+                  colors: ['#2563eb', '#ffffff', '#60a5fa']
+                });
+              } catch (e) {
+                console.warn('Confetti failed');
+              }
+            }, 300);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Supabase Sync Failed:', e);
+      ironVault.queueWorkout({
+        lift_id: selectedLift.id,
+        weight_used: weightUsed,
+        reps_completed: actualReps
+      });
+    }
+
     const updatedHistory = [newLog, ...history];
     setHistory(updatedHistory);
     localStorage.setItem('iron-mind-history', JSON.stringify(updatedHistory));
     setCompletedSets([]);
     setShowSuccess(true);
     setShowAMRAPModal(false);
-
-    // PR Celebration Logic
-    const previousBest = history
-      .filter((h: any) => h.lift?.toUpperCase() === selectedLift.name?.toUpperCase())
-      .reduce((max: number, h: any) => {
-        const vol = parseFloat(String(h.volume).replace(/,/g, ''));
-        const sets = parseInt(String(h.sets)) || 1;
-        const est = estimate1RM.epley(vol / sets, 5);
-        return est > max ? est : max;
-      }, 0);
-
-    const currentEst = estimate1RM.epley(weightUsed, actualReps);
-
-    if (currentEst > previousBest && history.length > 0) {
-      setShowPR(true);
-      if (user) {
-        checkAndAwardAchievement(user.id, 'new_pr');
-      }
-      setTimeout(() => {
-        try {
-          const confetti = require('canvas-confetti').default;
-          confetti({
-            particleCount: 150,
-            spread: 70,
-            origin: { y: 0.6 },
-            colors: ['#2563eb', '#ffffff', '#60a5fa']
-          });
-        } catch (e) {
-          console.warn('Confetti failed');
-        }
-      }, 300);
-    }
   };
 
   if (loading) {
@@ -900,7 +927,12 @@ export const AppContent = () => {
               </div>
 
               <button
-                onClick={() => amrapContext && submitWorkout(parseInt(amrapInput || '0'), amrapContext.weight, amrapContext.totalVolume)}
+                onClick={async () => {
+                  const { data: { user } } = await supabase.auth.getUser();
+                  if (amrapContext) {
+                    submitWorkout(parseInt(amrapInput || '0'), amrapContext.weight, amrapContext.totalVolume, user);
+                  }
+                }}
                 className="w-full bg-blue-600 text-white py-5 rounded-2xl font-black italic tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30"
               >
                 SAVE PERFORMANCE
