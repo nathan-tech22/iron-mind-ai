@@ -276,6 +276,16 @@ export const AppContent = () => {
     overall_score: null,
     date: new Date().toISOString().split('T')[0], // Initialize with today's date
   });
+  const [theme, setTheme] = useState('FOUNDER BLACK'); // New theme state
+
+  // Load profile and theme from localStorage on initial load
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('iron-mind-profile');
+    if (savedProfile) {
+      const parsedProfile = JSON.parse(savedProfile);
+      setTheme(parsedProfile.theme || 'FOUNDER BLACK');
+    }
+  }, []);
 
   const handleRPEChange = (index: number, rpe: number) => {
     setRpeValues(prev => {
@@ -841,7 +851,7 @@ export const AppContent = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-32">
+    <div className={`min-h-screen bg-black text-white pb-32 ${theme.toLowerCase().replace(/\s/g, '-')}`}>
       {activeTab === 'train' && (
         <TrainingView
           lifts={lifts}
@@ -864,8 +874,8 @@ export const AppContent = () => {
       )}
       {activeTab === 'stats' && <PRTracker />}
       {activeTab === 'history' && <HistoryScreen logs={history} />}
-      {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} />}
       {activeTab === 'achievements' && <AchievementsScreen achievements={achievements} />}
+      {activeTab === 'settings' && <SettingsScreen lifts={lifts} onUpdateLifts={updateLifts} history={history} onThemeChange={setTheme} />}
 
       {showReadinessModal && (
         <ReadinessCheckModal

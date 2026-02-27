@@ -119,6 +119,7 @@
 - [x] Updated `SOUL.md` with new operating principles and persona adjustments.
 - [x] Implemented percentage display for lifts on the train tab.
 - [x] Added 'TM' label to training max display on lift cards.
+- [x] Implemented visual theme options (Founder Black, Iron Neon) and wired them to SettingsScreen/AppContent.
 
 ### Blocked
 - Sub-agent spawning is blocked due to a "gateway token mismatch" error.

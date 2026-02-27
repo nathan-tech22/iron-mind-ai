@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 
 import { Lift, WorkoutLog, Profile } from '@/lib/types';
 
-export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: Lift[], onUpdateLifts: (l: Lift[]) => void, history?: WorkoutLog[] }) => {
+export const SettingsScreen = ({ lifts, onUpdateLifts, history = [], onThemeChange }: { lifts: Lift[], onUpdateLifts: (l: Lift[]) => void, history?: WorkoutLog[], onThemeChange: (theme: string) => void }) => {
   const [editingTM, setEditingTM] = useState(false);
   const [editingProfile, setEditingProfile] = useState(false);
   const [tempLifts, setTempLifts] = useState<Lift[]>(lifts);
@@ -43,6 +43,7 @@ export const SettingsScreen = ({ lifts, onUpdateLifts, history = [] }: { lifts: 
   const saveProfile = (newProfile: any) => {
     setProfile(newProfile);
     localStorage.setItem('iron-mind-profile', JSON.stringify(newProfile));
+    onThemeChange(newProfile.theme); // Apply theme globally
     setEditingProfile(false);
   };
 

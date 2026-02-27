@@ -1,26 +1,66 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Founder Black defaults */
+  --color-primary: #2563eb; /* blue-600 */
+  --color-secondary: #60a5fa; /* blue-400 */
+  --color-background: #000000; /* black */
+  --color-text: #ffffff; /* white */
+  --color-text-muted: #a1a1aa; /* zinc-400 */
+  --color-card-bg: #18181b; /* zinc-900 */
+  --color-border: #3f3f46; /* zinc-700 */
+  --color-success: #10b981; /* emerald-500 */
+  --color-warning: #f59e0b; /* amber-500 */
+  --color-danger: #ef4444; /* red-500 */
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.iron-neon {
+  --color-primary: #00e5ff; /* Cyan-like neon */
+  --color-secondary: #ff00e5; /* Magenta-like neon */
+  --color-background: #0d0d0d; /* Darker background for neon contrast */
+  --color-text: #e0e0e0; /* Off-white for readability */
+  --color-text-muted: #8b5cf6; /* Violet-ish for muted text */
+  --color-card-bg: #1a0033; /* Dark purple */
+  --color-border: #5a127d; /* Medium purple */
+  --color-success: #00ff00; /* Bright green */
+  --color-warning: #ffcc00; /* Bright yellow */
+  --color-danger: #ff0000; /* Bright red */
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: Arial, Helvetica, sans-serif; /* Keep Arial as the base font */
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
+
+/* Apply theme-specific colors to Tailwind classes */
+.bg-black {
+  background-color: var(--color-background);
+}
+.text-white {
+  color: var(--color-text);
+}
+.text-blue-500 {
+  color: var(--color-primary);
+}
+.text-zinc-500 {
+  color: var(--color-text-muted);
+}
+.bg-blue-600 {
+  background-color: var(--color-primary);
+}
+.border-blue-400 {
+  border-color: var(--color-secondary);
+}
+.shadow-blue-900\/20 {
+  box-shadow: 0 0 20px rgba(var(--color-primary-rgb), 0.2);
+}
+.bg-zinc-900 {
+  background-color: var(--color-card-bg);
+}
+.border-zinc-800 {
+  border-color: var(--color-border);
+}
+
+/* Add any other classes that need dynamic theming */
