@@ -14,7 +14,7 @@ interface SetRowProps {
   percentage: number; // New prop for percentage
 }
 
-export const SetRow = ({ set, index, completedSets, toggleSet, rpeValue, onRPEChange }: SetRowProps) => {
+export const SetRow = ({ set, index, completedSets, toggleSet, rpeValue, onRPEChange, percentage }: SetRowProps) => {
   const isCompleted = completedSets.includes(index);
 
   return (
